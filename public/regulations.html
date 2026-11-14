@@ -70,9 +70,14 @@ td small { color: var(--muted); }
 
   <div class="panel" id="stampBox"><span class="stamp">불러오는 중</span></div>
 
-  <div class="panel refresh">
+  <div class="panel" id="howUpdated" hidden>
+    <h2 style="margin:0 0 4px">이 표를 갱신하는 방법</h2>
+    <p class="meta" style="margin:0">이 표는 AI(Claude)로 정책브리핑·국가법령정보센터·언론 보도를 검색해 모은 뒤, 사람이 출처를 대조해 갱신합니다. 상태가 '확인됨'인 값만 확정 값으로 씁니다. 갱신 기록은 아래 '변경 이력'에 있습니다.</p>
+  </div>
+
+  <div class="panel refresh" id="refreshPanel">
     <div class="refresh-head">
-      <div><h2 style="margin:0">최신 내용으로 새로고침</h2><p class="meta" style="margin:2px 0 0">정책브리핑·국토교통부·국가법령정보센터·언론에서 최신 발표를 찾아 지금 표와 <b>달라진 점</b>, 그리고 <b>앞으로 바뀔 것</b>을 시행 예정 · 높은 가능성 · 루머·검토로 나눠 보여 줍니다. 확인 후 [반영]을 눌러야 표가 바뀝니다.</p></div>
+      <div><h2 style="margin:0">최신 내용으로 새로고침</h2><p class="meta" style="margin:2px 0 0">정책브리핑·국토교통부·국가법령정보센터·언론에서 최신 발표를 찾아 지금 표와 <b>달라진 점</b>, 그리고 <b>앞으로 바뀔 것</b>을 시행 예정 · 높은 가능성 · 보도·검토(미확정)로 나눠 보여 줍니다. 확인 후 [반영]을 눌러야 표가 바뀝니다.</p></div>
       <button type="button" id="btnRefresh">새로고침</button>
     </div>
     <div id="refreshOut"></div>
@@ -80,7 +85,7 @@ td small { color: var(--muted); }
 
   <div class="panel">
     <h2>앞으로 바뀔 수 있는 것</h2>
-    <p class="sec-note"><span class="st st-sched">시행 예정</span> 법·고시로 확정되어 시기만 남은 것 · <span class="st st-likely">높은 가능성</span> 정부안 발표·국회 심의 중 · <span class="st st-rumor">루머·검토</span> 보도·검토 단계(공식 확정 아님). 계산에는 <b>시행 예정</b>만 반영하고, 나머지는 상담 때 참고합니다.</p>
+    <p class="sec-note"><span class="st st-sched">시행 예정</span> 법·고시로 확정되어 시기만 남은 것 · <span class="st st-likely">높은 가능성</span> 정부안 발표·국회 심의 중 · <span class="st st-rumor">보도·검토(미확정)</span> 보도·검토 단계(공식 확정 아님). 계산에는 <b>시행 예정</b>만 반영하고, 나머지는 상담 때 참고합니다.</p>
     <div class="scroll-x"><table id="outlookTable"></table></div>
   </div>
 
@@ -129,13 +134,15 @@ td small { color: var(--muted); }
 //           changes: [ { kind: "지역 추가"|"지역 해제"|"규제 변경"|"기간 변경"|"법령 값 변경",
 //                        target: "지역 이름·규제 항목·법령 항목", before: "", after: "",
 //                        date: "발표·시행일", source: { title: "", url: "" } } ],
-//           outlook: [ { status: "시행 예정"|"높은 가능성"|"루머·검토", topic: "", what: "", when: "",
+//           outlook: [ { status: "시행 예정"|"높은 가능성"|"보도·검토(미확정)", topic: "", what: "", when: "",
 //                        impact: "이 페이지·계산의 어디에 영향", source: { title: "", url: "" } } ],
 //           next: <변경과 outlook을 반영한 regulations.json 전체> }
-//   상태 기준: 시행 예정 = 법·고시로 확정되어 시기만 남음 · 높은 가능성 = 정부안 발표·국회 심의 중 · 루머·검토 = 보도·검토 단계
+//   상태 기준: 시행 예정 = 법·고시로 확정되어 시기만 남음 · 높은 가능성 = 정부안 발표·국회 심의 중 · 보도·검토(미확정) = 보도·검토 단계
 // POST APPLY_URL    요청: { next } → 서버가 regulations.json을 바꾸고 history에 한 줄 추가. 정기 예약 작업도 같은 경로를 씀.
 const REFRESH_URL = "";
 const APPLY_URL = "";
+// 갱신 서버가 연결되지 않았으면 새로고침 단추와 설명을 숨기고, 갱신 방법을 보여 줌
+if (!REFRESH_URL) { document.getElementById("refreshPanel").hidden = true; document.getElementById("howUpdated").hidden = false; }
 
 let pending = null;
 async function refreshRegulations(current) {
@@ -190,7 +197,7 @@ fetch("regulations.json").then((r) => r.json()).then((d) => {
   const src = (x) => (x?.source?.url ? `<br><small><a href="${esc(x.source.url)}" target="_blank" rel="noopener">${esc(x.source.title || "출처")}</a></small>` : "");
   const stCls = (s) => (s === "시행 예정" ? "st-sched" : s === "높은 가능성" ? "st-likely" : "st-rumor");
   const chk = (s) => `<span class="st ${String(s).startsWith("확인됨") ? "st-ok" : "st-chk"}">${esc(s)}</span>`;
-  const order = { "시행 예정": 0, "높은 가능성": 1, "루머·검토": 2 };
+  const order = { "시행 예정": 0, "높은 가능성": 1, "보도·검토(미확정)": 2 };
   document.getElementById("outlookTable").innerHTML = (d.outlook || []).length ? `<thead><tr><th>상태</th><th>무엇이</th><th>내용</th><th>언제</th><th>영향</th></tr></thead><tbody>` +
     [...d.outlook].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9)).map((o) => `<tr><td><span class="st ${stCls(o.status)}">${esc(o.status)}</span></td><td><b>${esc(o.topic)}</b></td><td>${esc(o.what)}${src(o)}</td><td>${esc(o.when)}</td><td><small>${esc(o.impact)}</small></td></tr>`).join("") + "</tbody>" : `<tbody><tr><td class="meta">아직 조사한 내용이 없습니다.</td></tr></tbody>`;
   document.getElementById("dedTable").innerHTML = `<thead><tr><th>항목</th><th>종류</th><th>공제율·한도·요건</th><th>근거</th><th>상태</th></tr></thead><tbody>` +

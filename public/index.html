@@ -59,6 +59,8 @@ header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-cont
 header.top h1 { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
 header.top p { margin: 2px 0 0; color: var(--muted); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.switch-bar { margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
+.switch-bar > label { flex: 1 1 100%; }
 button {
   font: inherit; font-weight: 500; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
   color: var(--ink); padding: 7px 12px; cursor: pointer;
@@ -97,6 +99,9 @@ button:disabled { opacity: .5; cursor: default; }
 .amt-read { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 400; min-height: 0; }
 .amt-read:empty { display: none; }
 .amt-read.warn { color: var(--bad, #c0392b); font-weight: 600; }
+.inp-err { outline: 2px solid var(--bad, #c0392b); outline-offset: 1px; }
+.err-read { display: block; font-size: 11px; color: var(--bad, #c0392b); margin-top: 2px; font-weight: 600; }
+.input-block { border: 1px solid var(--bad, #c0392b); color: var(--bad, #c0392b); background: var(--surface, #fff); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 13px; font-weight: 600; }
 input.amt-warn { border-color: var(--bad, #c0392b) !important; background: rgba(192, 57, 43, .06) !important; }
 textarea { resize: vertical; min-height: 70px; }
 .rows { display: flex; flex-direction: column; gap: 8px; clear: both; }
@@ -216,7 +221,8 @@ textarea { resize: vertical; min-height: 70px; }
 .ana-h { font-size: 14px; margin: 14px 0 6px; }
 .ana-h small { font-weight: 400; color: var(--muted); font-size: 12px; }
 .fs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; align-items: start; }
-#a31bs tr.sum td, #a31cf tr.sum td { border-top: 1px solid var(--line); font-weight: 600; }
+#goalTable th, #goalTable td:not(.num) { text-align: left; }
+#a31bs tr.sum td, #a31cf tr.sum td, #a31goals tr.sum td { border-top: 1px solid var(--line); font-weight: 600; }
 #a31etc td:first-child { white-space: nowrap; font-weight: 600; }
 #a31cf td, #a31etc td:last-child, #a31retire td { white-space: normal; }
 #a31cf td.num { white-space: nowrap; vertical-align: top; }
@@ -303,6 +309,9 @@ textarea { resize: vertical; min-height: 70px; }
 .alt-params .chk { flex-direction: row; align-items: center; gap: 4px; }
 .cust-name { width: 200px !important; }
 .alt-why { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+td.crit2 { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.combo-box { margin-top: 10px; }
+.req-warn { font-size: 11.5px; margin-top: 3px; padding: 2px 6px; border-radius: 6px; background: var(--warn-soft, #fff4d6); color: var(--warn, #8a6100); font-weight: 600; }
 .alt-skip { margin-top: 12px; }
 .alt-skip summary { cursor: pointer; font-weight: 600; font-size: 13px; padding: 6px 0; }
 .alt-skip .alt-table { opacity: .8; }
@@ -497,6 +506,8 @@ tr.mark td { background: var(--surface-2); }
 .muted { color: var(--muted); }
 .example-tag { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--warn-soft); color: var(--warn); font-weight: 600; }
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header class="top">
@@ -510,8 +521,16 @@ tr.mark td { background: var(--surface-2); }
       <button id="btnReset" type="button">새 고객</button>
       <button id="btnGuide" type="button">지침 <span id="guideCount" class="badge"></span></button>
       <button id="btnCopy" type="button">입력값 JSON 복사</button>
+      <button id="btnPaste" type="button">입력값 붙여넣기</button>
+      <button id="btnUndoWipe" type="button" hidden>방금 지운 입력 되돌리기</button>
     </div>
   </header>
+  <div id="switchBar" class="panel card switch-bar" hidden></div>
+  <div id="pasteBar" class="panel card switch-bar" hidden>
+    <label class="mini" style="display:block"><span>[입력값 JSON 복사]로 복사한 내용을 붙여 넣으세요</span>
+      <textarea id="pasteIn" rows="4" style="width:100%" placeholder='{"members": [...], "client": {...}, ...}'></textarea></label>
+    <div><button type="button" class="small primary" id="pasteGo">불러오기</button> <button type="button" class="small ghost" id="pasteClose">닫기</button> <span id="pasteMsg" class="muted"></span></div>
+  </div>
 
   <section id="guidePanel" class="panel card guide" hidden>
     <div class="card-head"><h2>상담 지침</h2><button type="button" class="small" id="btnGuideClose">닫기</button></div>
@@ -526,6 +545,7 @@ tr.mark td { background: var(--surface-2); }
     <form id="form" class="panel ledger" autocomplete="off" onsubmit="return false">
       <div class="info-add">
         <label for="infoIn" class="info-label">상담 내용 넣기</label>
+        <small class="muted" style="display:block;margin-bottom:4px">AI에는 고객·가구원 이름과 생년월일을 관계·만 나이로 바꿔 보냅니다. 상담 내용에 다른 개인정보(연락처·주소 등)가 있으면 지우고 보내세요.</small>
         <textarea id="infoIn" placeholder="상담에서 들은 내용을 그대로 붙여 넣으세요. 예: 42세 회사원이고 월 450 받아요. 아내는 전업주부, 아이 둘(7살, 4살). 주담대 2억 남았고 금리 4%예요."></textarea>
         <div class="ai-status">
           <button type="button" class="primary" id="btnClassify">AI로 알맞은 칸에 넣기</button>
@@ -631,6 +651,7 @@ tr.mark td { background: var(--surface-2); }
           <div class="field"><label for="f-inv">투자자산 <em class="req">필수</em></label><div class="inp"><input id="f-inv" data-path="assets.invest" type="number" inputmode="decimal"><span class="unit">만</span></div></div>
           <div class="field"><label for="f-locked">그중 만기 전 예금</label><div class="inp"><input id="f-locked" data-path="assets.locked" type="number" inputmode="decimal"><span class="unit">만</span></div></div>
           <div class="field"><label for="f-lockedto">만기 연월</label><div class="inp"><input id="f-lockedto" data-path="assets.lockedTo" type="month"></div></div>
+          <div class="field"><label for="f-lockedmat">만기 수령액(세후, 알면)</label><div class="inp"><input id="f-lockedmat" data-path="assets.lockedMat" type="number" inputmode="decimal" placeholder="비우면 예금 금리로 추정"><span class="unit">만</span></div></div>
           <div class="field"><label for="f-use">사용자산(자동차 등)</label><div class="inp"><input id="f-use" data-path="assets.use" type="number" inputmode="decimal"><span class="unit">만</span></div></div>
           <div class="field"><label for="f-re">거주 주택 시세 <em class="req">필수</em> <small class="muted">자가가 아니면 0</small></label><div class="inp"><input id="f-re" data-path="assets.realEstate" type="number" inputmode="decimal"><span class="unit">만</span></div></div>
         </div>
@@ -829,6 +850,7 @@ tr.mark td { background: var(--surface-2); }
         </div>
       </div>
 
+      <div id="inputBlock" class="input-block" hidden></div>
       <div id="kpis" class="kpis"></div>
 
         </aside>
@@ -840,6 +862,17 @@ tr.mark td { background: var(--surface-2); }
       <div class="card-head"><h2><span class="stage-no">4단계</span> 대안 제시 <small>4-1 대안의 파악 및 평가</small></h2><a class="small-link" href="#stage3">← 3단계 분석으로</a></div>
       <p class="muted" style="margin:0">① 정보 수집 페이지에 입력한 고객 정보를 그대로 씁니다. 대안 라이브러리에서 이 고객에게 해당되는 대안의 판단을 정하면 <b>채택</b>한 대안이 계산에 들어가고, 아래 표들이 바로 다시 계산됩니다. 대안마다 <b>연결 목표</b>를 정하면 그 목표의 순위대로 실행 순서가 정해집니다. 금액은 만 원, 실질은 기준일 연도 가치입니다.</p>
       <div id="altKpis" class="kpis"></div>
+    </div>
+
+    <div class="panel card">
+      <div class="card-head"><h2>4단계 금융자산 흐름 <small>3단계와 비교</small></h2><span class="note"><span class="mode-slot"></span> 연말 기준 · 마우스를 올리면 연도별 내역</span></div>
+      <div class="legend">
+        <span><i style="background:var(--accent)"></i>4단계 유동성(대안 적용)</span>
+        <span><i style="background:#c2702a"></i>3단계 유동성(현상 유지)</span>
+        <span><i style="background:repeating-linear-gradient(90deg,var(--muted) 0 5px,transparent 5px 8px)"></i>4단계 순자산(점선)</span>
+        <span><i style="background:var(--warn)"></i>목표 시점(숫자 = 순위, 마우스를 올리면 이름 · 아래 띠 = 기간)</span>
+      </div>
+      <div id="altChart" class="chart-wrap"></div>
     </div>
 
     <div class="panel card">
@@ -874,18 +907,12 @@ tr.mark td { background: var(--surface-2); }
     <div class="panel card">
       <div class="card-head"><h2>D. 최종안에서 하나씩 뺐을 때 <small>한계 효과</small></h2></div>
       <div class="scroll-x"><table id="altMarg"></table></div>
+      <div id="comboBox" class="combo-box" hidden>
+        <div class="ai-status"><button type="button" class="small" id="btnCombo">조합 점검</button><span id="comboStatus" class="muted">채택 대안 중 1개 또는 2개를 함께 뺀 모든 조합을 계산합니다(설계사용 참고).</span></div>
+        <div id="comboOut"></div>
+      </div>
     </div>
 
-    <div class="panel card">
-      <div class="card-head"><h2>4단계 금융자산 흐름 <small>3단계와 비교</small></h2><span class="note"><span class="mode-slot"></span> 연말 기준 · 마우스를 올리면 연도별 내역</span></div>
-      <div class="legend">
-        <span><i style="background:var(--accent)"></i>4단계 유동성(대안 적용)</span>
-        <span><i style="background:#c2702a"></i>3단계 유동성(현상 유지)</span>
-        <span><i style="background:repeating-linear-gradient(90deg,var(--muted) 0 5px,transparent 5px 8px)"></i>4단계 순자산(점선)</span>
-        <span><i style="background:var(--warn)"></i>목표 시점(숫자 = 순위, 마우스를 올리면 이름 · 아래 띠 = 기간)</span>
-      </div>
-      <div id="altChart" class="chart-wrap"></div>
-    </div>
 
     <div class="panel card">
       <div class="card-head"><h2>3단계 현상 유지 vs 4단계 제안</h2></div>
@@ -950,16 +977,16 @@ const EXAMPLE = {
       { name: "여가", amount: 20, kind: "인원 연동", until: "" },
       { name: "관리비", amount: 20, kind: "고정", until: "" },
       { name: "자동차보험료", amount: 5.8333, kind: "고정", until: "" },
-      { name: "자동차세(지방교육세 포함)", infl: false, amount: 4.33, kind: "자동차세", until: "" },
-      { name: "아들 사교육비(고교)", amount: 80, kind: "고정", from: "", until: "2028-11" },
-      { name: "딸 사교육비(중학)", amount: 60, kind: "고정", from: "", until: "2028-02" },
-      { name: "딸 사교육비(고교)", amount: 80, kind: "고정", from: "2028-03", until: "2030-11" },
-      { name: "아들 용돈(입학 전)", infl: false, amount: 30, kind: "고정", from: "", until: "2029-02" },
-      { name: "딸 용돈(입학 전)", infl: false, amount: 30, kind: "고정", from: "", until: "2031-02" },
-      { name: "아들 대학 용돈(입대 전)", infl: false, amount: 80, kind: "고정", from: "2029-03", until: "2030-02" },
-      { name: "아들 대학 용돈(전역·복학)", infl: false, amount: 80, kind: "고정", from: "2031-09", until: "2035-02" },
-      { name: "딸 대학 용돈", infl: false, amount: 80, kind: "고정", from: "2031-03", until: "2035-02" },
-      { name: "자녀 구직기간 용돈(2명)", infl: false, amount: 100, kind: "고정", from: "2035-03", until: "2037-02" },
+      { name: "자동차세(지방교육세 포함)", infl: false, amount: 4.3333, kind: "자동차세", until: "" },
+      { name: "아들 사교육비(고교)", amount: 80, kind: "변동", from: "", until: "2028-11" },
+      { name: "딸 사교육비(중학)", amount: 60, kind: "변동", from: "", until: "2028-02" },
+      { name: "딸 사교육비(고교)", amount: 80, kind: "변동", from: "2028-03", until: "2030-11" },
+      { name: "아들 용돈(입학 전)", infl: false, amount: 30, kind: "변동", from: "", until: "2029-02" },
+      { name: "딸 용돈(입학 전)", infl: false, amount: 30, kind: "변동", from: "", until: "2031-02" },
+      { name: "아들 대학 용돈(입대 전)", infl: false, amount: 80, kind: "변동", from: "2029-03", until: "2030-02" },
+      { name: "아들 대학 용돈(전역·복학)", infl: false, amount: 80, kind: "변동", from: "2031-09", until: "2035-02" },
+      { name: "딸 대학 용돈", infl: false, amount: 80, kind: "변동", from: "2031-03", until: "2035-02" },
+      { name: "자녀 구직기간 용돈(2명)", infl: false, amount: 100, kind: "변동", from: "2035-03", until: "2037-02" },
       { name: "은퇴 초기 자녀 몫 생활비", amount: 66.7528, kind: "고정", from: "2035-09", until: "2037-02" },
       { name: "아내 기타 의료비(치료 중)", amount: 17.1812, kind: "의료비", from: "", until: "2027-12" },
       { name: "아내 추적관찰 의료비", amount: 2.3374, kind: "의료비", from: "2028-01", until: "2031-09" },
@@ -968,22 +995,23 @@ const EXAMPLE = {
       { name: "모친 생활비 지원(3단계)", infl: false, amount: 70, kind: "고정", from: "2036-11", until: "2041-01" },
     ],
   },
-  assets: { cash: 3757.9, invest: 0, realEstate: 100000, use: 3500, locked: 3157.9, lockedTo: "2027-01" },
+  assets: { cash: 3757.9, invest: 0, realEstate: 100000, use: 3500, locked: 3157.9, lockedTo: "2027-01", lockedMat: 3172.584 }, // 만기 수령액 = 원금 3,000 + 이자 3,000 × 3.4% × 2년 × (1 − 15.4%)
   loans: [{ name: "주택담보대출", balance: 25321.6, rate: 2.7, years: 23.42, deduct: true }],
   pension: { self: { monthly: 174.0, startAge: 65 }, spouse: { monthly: 134.8, startAge: 65 } },
   liab: { card: 150 },
   legacy: { target: 80000, rank: 6, term: "장기", src: "설계사 구체화", say: "나중에 아이들에게 물려주고 싶어요.(설계사 질문 후)", spec: "부부가 모두 사망했을 때 자녀 각 4억 원(2026년 가치) 이전 · 다운사이징한 집을 상속",
     basis: "자녀 2명 × 4억 = 8억(실질) · 시점 2063.6(아내 기대여명 + 3년) · 처음 '각 1억' 희망을 다운사이징한 집(현재가치 6억)을 물려주고 싶다는 말과 연결해 구체화, 고객 동의" },
   goals: [
-    { gid: "g1", rank: 1, name: "2차 치료비(2026, 키트루다 3회)", type: "once", age: 56, amount: 1200, years: 1, tax: "의료비", term: "단기", src: "설계사 구체화",
+    { gid: "g1", rank: 1, name: "2차 치료비(2026, 키트루다 3회)", type: "once", age: 56, amount: 1200.3336, years: 1, tax: "의료비", term: "단기", src: "설계사 구체화",
       say: "2차 치료로 넘어갈 것 같은데, 미리 치료비를 모아두고 싶어요.", spec: "남은 키트루다 치료비 확보 + 지금 수입보다 지출이 큰 가계를 흑자로 전환",
       basis: "키트루다 100mg 상한금액 2,100,556원 × 2병 = 회당 420.1만 원 × 15회(1차 남은 6회 + 2차 9회, 2026.11~2027.11) − 4세대 실손 통원 회당 20만 원 = 순부담 6,001.7만 원 · 일정은 치료일정 시트" },
-    { gid: "g1b", rank: 1, name: "2차 치료비(2027, 키트루다 12회)", type: "once", age: 57, amount: 4684, years: 1, tax: "의료비", term: "단기", src: "설계사 구체화", basis: "위 1순위 산정의 2027년분" },
+    { gid: "g1b", rank: 1, name: "2차 치료비(2027, 키트루다 12회)", type: "once", age: 57, amount: 4684.2287, years: 1, tax: "의료비", term: "단기", src: "설계사 구체화", basis: "위 1순위 산정의 2027년분" },
     { gid: "g2", rank: 2, name: "아들 등록금(2029, 입대 전)", type: "once", age: 59, amount: 915.14, growth: 3, years: 1, tax: "교육비", term: "중기", src: "설계사 구체화",
       say: "아이들이 취업할 때까지는 학비와 용돈을 책임지고 싶어요.", spec: "2029.3~2037.2 등록금·용돈",
       basis: "등록금 2029학년도 학기당 500(연 1,000), 연 3% 인상 → 2026년 기준 1,000 ÷ 1.03³ = 915.14, 상승률 3% · 합계 8,815.9 · 용돈 재학 월 80(아들 군 복무 2030.3~2031.9 중 미지급), 구직 2년 월 50(1인)은 월 지출 항목" },
     { gid: "g2b", rank: 2, name: "아들 등록금(2032~2034, 복학)", type: "period", age: 62, amount: 915.14, growth: 3, years: 3, tax: "교육비", term: "중기", src: "설계사 구체화", basis: "위 2순위 산정(학기당 500·연 3% 인상)" },
     { gid: "g2c", rank: 2, name: "딸 등록금(2031~2034)", type: "period", age: 61, amount: 915.14, growth: 3, years: 4, tax: "교육비", term: "중기", src: "설계사 구체화", basis: "위 2순위 산정(학기당 500·연 3% 인상)" },
+    { gid: "g2d", rank: 2, name: "자녀 대학·구직 용돈", type: "period", age: 59, amount: "", years: 9, tax: "일반", ext: true, extSrc: "월 지출 항목", extItems: ["아들 대학 용돈(입대 전)", "아들 대학 용돈(전역·복학)", "딸 대학 용돈", "자녀 구직기간 용돈(2명)"], term: "중기", src: "설계사 구체화", basis: "재학 중 월 80(아들 군 복무 2030.3~2031.9 중 미지급) · 구직 2년 월 50(1인) · 합계 10,560(명목) · 금액은 월 지출 항목" },
     { gid: "g3", rank: 3, name: "간병 기간 소득 보전", type: "once", age: 57, amount: "", years: 1, tax: "일반", ext: true, extSrc: "근로시간 단축", careFrom: "2027-04", careTo: "2027-12", term: "단기", src: "설계사 구체화",
       say: "아내 곁에서 간병하고 싶은데, 소득이 끊길까 봐 두려워요.", spec: "가족돌봄 근로시간 단축으로 직접 간병하면서 줄어드는 소득 보전(2차 치료 기간)",
       basis: "남녀고용평등법 §22의3: 주 15~30시간, 최대 3년 · 휴직이 아닌 단축 · 단축 시간·기간은 4단계 대안 '가족돌봄 근로시간 단축'" },
@@ -1000,7 +1028,7 @@ const EXAMPLE = {
 
   assume: { inflation: 2.5, incomeGrowth: 3, returnRate: 3.5, reGrowth: 2.5 },
   baseDate: "2026-10-31",
-  tax: { items: [{ k: "card", amount: 1800, who: "본인" }, { k: "preMed", amount: 834.9, who: "본인" }] },
+  tax: { items: [{ k: "card", amount: 1800, who: "본인" }, { k: "preMed", amount: 834.585, who: "본인" }] },
   eval3: {
     s: "순자산 11.2억 · 안정적인 남편 소득 · 국민연금 장기 가입(만 60세까지 남편 33년 · 아내 31년 7개월)",
     w: "자산의 73%가 집 · 현금은 1개월분 · 이미 월 −72.8 적자",
@@ -1010,6 +1038,8 @@ const EXAMPLE = {
   },
   altGoal: { dep: "g1", draw: "g1", silson: "g1", medc: "g1", ui: "g1", credit: "g1", cut: "g1", ds: "g2", educ: "g2", scholar: "g2", care: "g3", leave: "g3", dc: "g4", irp: "g4", vol: "g4", wvol: "g4", defer: "g4", psa: "g4", lv: "g4", hp: "g4", mom: "g5", split: "legacy", dIns: "legacy", gift: "g7" },
   altOrder: ["draw", "care", "ds", "dc", "irp", "vol", "wvol", "defer", "psa", "split", "gift", "lv"], altMetric: "child",
+  // B표 메모: 숫자는 D표(그 대안만 뺐을 때 상속 순수령), 이유는 보고서 4-1·4-3에 적힌 내용
+  altMemo: {"draw": "빼면 자녀 순수령 +29,170이지만 2026년부터 유동성 마이너스(기준 2 위반) · 정기예금 만기금과 아내 IRP 저율 인출(부득이한 인출·55세 후 의료비 인출)로 치료비 마련", "dep": "정기예금 만기금(2027.1)을 1순위 치료비 재원으로 씀(아내 IRP 저율 인출과 함께 채택)", "care": "빼면 +2,388이지만 3순위(직접 간병) 목표를 이루는 방식이라 유지(기준 3) · 고객: 휴직이 아닌 근로시간 단축으로 남편이 직접 간병", "ds": "빼면 −21,580, 2032년부터 유동성 마이너스 · 시점 2031.3은 '자녀 독립 후 작은 집' 희망(기준 4)과 딸 고교 졸업(2031.2) 직후, 60세 요건·매각 직전 비상예비자금 조건 안에서 고름", "dc": "빼면 −24,147, 2061년부터 유동성 마이너스 · 임금피크 직전(2030.8.31) 전환으로 줄어드는 퇴직급여를 막음", "irp": "일시금이면 +82(0.1% 경계) · 종신 노후소득을 우선(기준 3)", "vol": "빼면 −313 · 남편 임의계속가입(2030.9~2035.8)", "wvol": "빼면 −2,044 · 아내 임의가입(기준소득월액 101.3)", "defer": "연기 없음이면 +1,677 · 종신 지급액 +21.6%로 예상보다 오래 사는 위험에 대비해 4순위(노후)를 7순위(증여)보다 먼저(기준 3·6) · 4-3에서 부부가 장수 대비를 선택", "psa": "빼면 −4,480 · 2031년 주택차액 1억 + 600 납입", "split": "배우자 전부 상속이면 −14,644 · 배우자는 법정상속분(3/7)까지, 나머지 주택 지분은 자녀 — 1차 세금은 같고 2차 상속재산만 줄어듦", "gift": "1억씩이면 자녀 순수령 73,760(6순위 92.2%) · 6순위를 지키는 최대 6,100으로 조정 · 4-3에서 부부가 '집을 물려주는 것이 더 중요'하다며 선택, 2044년에 다시 봄", "lv": "필요할 때만 인출이면 +1,845 · 남편 사망 뒤 2058~2062년 아내 사적연금이 연 1,500만 원을 넘어 종합과세 또는 16.5% 분리과세가 생기므로 균등 수령, 수익률 가정이 낮으면 균등 수령이 유리(기준 6)", "silson": "4세대 실손 유지·청구(통원 회당 20만 원)로 치료비 순부담을 줄임", "medc": "2027 귀속 연말정산 의료비 세액공제(실손 수령액 차감)", "credit": "이자 비용만 생김(기준 5)", "cut": "지출이 통계 평균 수준(기준 4)", "leave": "고객: 휴직이 아닌 가족돌봄 근로시간 단축으로 직접 간병", "dIns": "자녀 계약자 사망보험 방식은 제외(2단계 수집 때 판단)", "tIns": "가장 사망·암 재발 보장은 상품 견적 후 결정(5단계에서 5개 비교)", "mom": "모친과 같이 살 생각은 없고 월 50 송금 유지(고객 응답)"},
   altJudge: { dep: "채택", silson: "채택", medc: "채택", educ: "채택", ui: "실행만", credit: "미채택", cut: "미채택", scholar: "검토 보류", leave: "미채택", hp: "미채택", dIns: "미채택", tIns: "검토 보류", mom: "유지" },
   house: { owner: "본인", buyPrice: 60000, buyDate: "2020-03", oneHouse: true },
   // 보고서 4단계 최종안
@@ -1055,10 +1085,6 @@ try {
   // 손대지 않은 예시면 저장값 대신 최신 예시를 불러옴(예시를 고친 뒤 화면이 예전 값에 머무르지 않게)
   if (saved && saved.state) { isExample = !!saved.isExample; state = isExample ? clone(EXAMPLE) : saved.state; }
 } catch (e) {}
-// 이전 버전에서 저장한 입력값에는 항목별 생활비가 없음
-if (!Array.isArray(state.expense.items)) state.expense.items = [];
-if (!state.expense.mode) state.expense.mode = "total";
-if (!state.info) state.info = {};
 // 재무목표: 이름 앞에 붙은 "N순위"는 순위 칸으로 옮김(예전 버전에서 저장한 목표), 유형이 없으면 기간으로 판단
 const fixGoal = (g) => {
   const m = /^\s*(\d{1,2})\s*순위\s*/.exec(g.name || "");
@@ -1066,46 +1092,55 @@ const fixGoal = (g) => {
   if (!g.type) g.type = num(g.years, 1) > 1 ? "period" : "once";
   return g;
 };
-if (!state.housing) state.housing = { type: "", region: "" };
-if (!Array.isArray(state.props)) state.props = [];
-if (!Array.isArray(state.policies)) state.policies = [];
-if (!state.pension.self) state.pension = { self: { monthly: state.pension.monthly ?? "", startAge: state.pension.startAge ?? "" }, spouse: { monthly: "", startAge: "" } };
-if (!state.liab) state.liab = { card: "" };
-if (!state.sw) state.sw = { giftOn: 0 };
-if (!state.house) state.house = { owner: "본인", buyPrice: "", buyDate: "", oneHouse: true };
-if (state.baseDate === undefined) state.baseDate = "";
-if (!Array.isArray(state.assets.others)) state.assets.others = [];
-if (!state.tax) state.tax = {};
-// 예전 버전: 신용카드·기준일 전 의료비를 따로 저장 → 공제 항목 목록으로 옮김
-if (!Array.isArray(state.tax.items)) {
-  const has = (v) => v !== "" && v != null;
-  state.tax.items = [];
-  if (has(state.tax.card)) state.tax.items.push({ k: "card", amount: state.tax.card, who: "본인" });
-  if (has(state.tax.preMed)) state.tax.items.push({ k: "preMed", amount: state.tax.preMed, who: "본인" });
-  delete state.tax.card; delete state.tax.preMed;
-}
-(state.members || []).forEach((m) => {
-  if (!Array.isArray(m.accounts)) m.accounts = [];
-  if (m.peak === undefined) m.peak = m.peakFrom !== undefined && m.peakFrom !== "";
-  if (m.rtType || (m.rtAmount !== undefined && m.rtAmount !== "")) {
-    m.accounts.push({ type: ["DB", "DC", "IRP"].includes(m.rtType) ? m.rtType : "DB", name: "", now: m.rtNow ?? "", contrib: "", contribUntil: "", payout: "일시금", startAge: m.rtAge ?? "", years: "", rate: "", dbAmount: m.rtAmount ?? "" });
+// 이전 버전에서 저장한 입력값 보정 — 시작할 때와 [입력값 붙여넣기] 때 함께 씀(인자 이름을 state로 두어 원래 코드를 그대로 씀)
+function migrateState(state) {
+  // 이전 버전에서 저장한 입력값에는 항목별 생활비가 없음
+  if (!Array.isArray(state.expense.items)) state.expense.items = [];
+  if (!state.expense.mode) state.expense.mode = "total";
+  if (!state.info) state.info = {};
+  if (!state.housing) state.housing = { type: "", region: "" };
+  if (!Array.isArray(state.props)) state.props = [];
+  if (!Array.isArray(state.policies)) state.policies = [];
+  if (!state.pension.self) state.pension = { self: { monthly: state.pension.monthly ?? "", startAge: state.pension.startAge ?? "" }, spouse: { monthly: "", startAge: "" } };
+  if (!state.liab) state.liab = { card: "" };
+  if (!state.sw) state.sw = { giftOn: 0 };
+  if (!state.house) state.house = { owner: "본인", buyPrice: "", buyDate: "", oneHouse: true };
+  if (state.baseDate === undefined) state.baseDate = "";
+  if (!Array.isArray(state.assets.others)) state.assets.others = [];
+  if (!state.tax) state.tax = {};
+  // 예전 버전: 신용카드·기준일 전 의료비를 따로 저장 → 공제 항목 목록으로 옮김
+  if (!Array.isArray(state.tax.items)) {
+    const has = (v) => v !== "" && v != null;
+    state.tax.items = [];
+    if (has(state.tax.card)) state.tax.items.push({ k: "card", amount: state.tax.card, who: "본인" });
+    if (has(state.tax.preMed)) state.tax.items.push({ k: "preMed", amount: state.tax.preMed, who: "본인" });
+    delete state.tax.card; delete state.tax.preMed;
   }
-  delete m.rtType; delete m.rtNow; delete m.rtAmount; delete m.rtAge;
-});
-if (!state.legacy) state.legacy = { target: "" };
-if (!state.retire) state.retire = { active: "", retroFrom: "", retro: "", careFrom: "", care: "", single: "" };
-if (!Array.isArray(state.income.items)) {
-  state.income.items = [
-    { name: "금융소득(이자·배당)", kind: "금융", owner: "", amount: "", from: "", until: "", infl: false },
-    { name: "기타소득(임대 등)", kind: "기타", owner: "", amount: Number(state.income.other) > 0 ? Number(state.income.other) : "", from: "", until: "", infl: true },
-  ];
+  (state.members || []).forEach((m) => {
+    if (!Array.isArray(m.accounts)) m.accounts = [];
+    if (m.peak === undefined) m.peak = m.peakFrom !== undefined && m.peakFrom !== "";
+    if (m.rtType || (m.rtAmount !== undefined && m.rtAmount !== "")) {
+      m.accounts.push({ type: ["DB", "DC", "IRP"].includes(m.rtType) ? m.rtType : "DB", name: "", now: m.rtNow ?? "", contrib: "", contribUntil: "", payout: "일시금", startAge: m.rtAge ?? "", years: "", rate: "", dbAmount: m.rtAmount ?? "" });
+    }
+    delete m.rtType; delete m.rtNow; delete m.rtAmount; delete m.rtAge;
+  });
+  if (!state.legacy) state.legacy = { target: "" };
+  if (!state.retire) state.retire = { active: "", retroFrom: "", retro: "", careFrom: "", care: "", single: "" };
+  if (!Array.isArray(state.income.items)) {
+    state.income.items = [
+      { name: "금융소득(이자·배당)", kind: "금융", owner: "", amount: "", from: "", until: "", infl: false },
+      { name: "기타소득(임대 등)", kind: "기타", owner: "", amount: Number(state.income.other) > 0 ? Number(state.income.other) : "", from: "", until: "", infl: true },
+    ];
+  }
+  if (!Array.isArray(state.members) || !state.members.length) {
+    const c = state.client, m = (rel, name, age, income, retireAge, lifeExp) => ({ rel, name, birth: "", age: age ?? "", job: "", income: income ?? "", retireAge: retireAge ?? "", lifeExp: lifeExp ?? "" });
+    state.members = [m("본인", "", c.age, state.income.self, c.retireAge, c.lifeExp)];
+    if (c.spouseAge !== "" && c.spouseAge != null) state.members.push(m("배우자", "", c.spouseAge, state.income.spouse, c.spouseRetireAge, ""));
+    String(c.children || "").split(/[,\s]+/).filter(Boolean).forEach((a) => state.members.push(m("자녀", "", Number(a), "", "", "")));
+  }
+  return state;
 }
-if (!Array.isArray(state.members) || !state.members.length) {
-  const c = state.client, m = (rel, name, age, income, retireAge, lifeExp) => ({ rel, name, birth: "", age: age ?? "", job: "", income: income ?? "", retireAge: retireAge ?? "", lifeExp: lifeExp ?? "" });
-  state.members = [m("본인", "", c.age, state.income.self, c.retireAge, c.lifeExp)];
-  if (c.spouseAge !== "" && c.spouseAge != null) state.members.push(m("배우자", "", c.spouseAge, state.income.spouse, c.spouseRetireAge, ""));
-  String(c.children || "").split(/[,\s]+/).filter(Boolean).forEach((a) => state.members.push(m("자녀", "", Number(a), "", "", "")));
-}
+migrateState(state);
 
 // 항목별 입력일 때는 지금 나이에 해당하는 항목의 합계가 생활비 총액
 const activeNow = (it) => (it.until === "" || it.until == null || num(it.until) >= num(state.client.age)) && (it.from === "" || it.from == null || num(it.from) <= num(state.client.age));
@@ -1216,7 +1251,8 @@ function bonusText(m) {
 function memberAge(m) {
   const d = m.birth ? new Date(m.birth) : null;
   if (d && !isNaN(d)) {
-    const t = new Date();
+    // 나이는 재무 기준일 기준(같은 기준일·입력이면 언제 열어도 같은 결과). 기준일이 비어 있으면 오늘
+    const bd = state?.baseDate ? new Date(state.baseDate) : null, t = bd && !isNaN(bd) ? bd : new Date();
     let a = t.getFullYear() - d.getFullYear();
     if (t.getMonth() < d.getMonth() || (t.getMonth() === d.getMonth() && t.getDate() < d.getDate())) a--;
     return a;
@@ -1247,8 +1283,9 @@ function syncMembers() {
   c.children = c.noChildren ? "" : ms.filter((m) => m.rel === "자녀").map(memberAge).filter((a) => a !== "").join(", ");
   state.income.self = me.income ?? "";
   state.income.spouse = sp ? sp.income ?? "" : "";
-  const own = blank(me.lifeExp) ? null : num(me.lifeExp);
-  const spEnd = sp && !blank(sp.lifeExp) && c.age !== "" && c.spouseAge !== "" ? num(sp.lifeExp) + (c.age - c.spouseAge) : null;
+  // 기대수명이 현재 나이 이하이면(기대여명을 넣은 경우 등) 빈칸으로 보고 계산 — 추정 카드·기본 점검에 경고
+  const own = blank(me.lifeExp) || (c.age !== "" && num(me.lifeExp) <= c.age) ? null : num(me.lifeExp);
+  const spEnd = sp && !blank(sp.lifeExp) && c.age !== "" && c.spouseAge !== "" && num(sp.lifeExp) > c.spouseAge ? num(sp.lifeExp) + (c.age - c.spouseAge) : null;
   c.lifeExp = own == null && spEnd == null ? "" : Math.max(own ?? 0, spEnd ?? 0);
   c.selfEnd = own ?? "";
   // 퇴직급여·임금피크 (본인·배우자)
@@ -1258,7 +1295,7 @@ function syncMembers() {
   c.spouseEnd = spEnd ?? "";
 }
 
-// 국민연금 단순 추정(현재가치, 만원/월): 소득대체율 43%(2026년 개혁), A값 319만, 상한 637만, 27세 가입 시작, 60세까지 납부
+// 국민연금 단순 추정(현재가치, 만원/월): 소득대체율 43%(2026년 개혁), A값 319만, 상한 659만(2026.7~), 27세 가입 시작, 60세까지 납부
 function estPension(monthlyNet, retireAge) {
   if (!(monthlyNet > 0)) return 0;
   const gross = Math.min(monthlyNet / (A("np_net_to_gross") / 100), A("np_cap"));
@@ -1290,6 +1327,11 @@ function normalize(s, plan = VIEW_PLAN) {
     p.lifeExp = Math.max(A("life_default"), p.age + 10);
     add({ id: "m-0-lifeExp", label: "기대수명(계획 종료)", shown: `${p.lifeExp}세`, why: "생명표 기대수명(약 84세)보다 길게 잡은 보수적 가정", vary: (q, k) => ({ ...q, lifeExp: Math.max(q.age + 5, q.lifeExp + A("vary_life") * k) }), range: `±${A("vary_life")}년` });
   }
+  (s.members || []).forEach((m, i) => {
+    if (!(i === 0 || (m.rel === "배우자" && !c.noSpouse)) || blank(m.lifeExp)) return;
+    const a = memberAge(m);
+    if (a !== "" && num(m.lifeExp) <= a) add({ id: `m-${i}-lifeExp`, label: `${i === 0 ? "본인" : "배우자"} 기대수명 ${m.lifeExp}세`, shown: "빈칸으로 보고 계산", why: LIFE_WARN });
+  });
   if (!c.noSpouse && blank(c.spouseAge) && num(s.income.spouse) > 0) {
     p.spouseAge = p.age;
     add({ id: spouseIdx() >= 0 ? `m-${spouseIdx()}-birth` : "add-member", label: "배우자 나이", shown: `${p.age}세`, why: "배우자 소득이 있어 본인과 같은 나이로 가정" });
@@ -1385,6 +1427,7 @@ function normalizeRaw(s) {
   // 목표 시점: 본인 나이(예: 61) 또는 연월(예: 2031-03) → 그해 본인 나이(연도별 계산과 같은 기준)
   const bd = /^(\d{4})-(\d{1,2})/.exec(String(s.baseDate || "")), startY = bd ? (+bd[2] === 12 ? +bd[1] + 1 : +bd[1]) : new Date().getFullYear();
   const goalAge = (v) => { const m = /^\s*(\d{4})(?:-(\d{1,2}))?\s*$/.exec(String(v ?? "")); return m ? num(c.age, 40) + (+m[1] - startY) : num(v); };
+  const goalAt = (v) => { const m = /^\s*(\d{4})-(\d{1,2})\s*$/.exec(String(v ?? "")); return m && +m[2] >= 1 && +m[2] <= 12 ? +m[1] * 12 + +m[2] - 1 : null; }; // 연월로 넣은 목표의 지출 달
   const p0 = {
     age: num(c.age, 40), retireAge: num(c.retireAge, 60), lifeExp: Math.max(num(c.lifeExp, 90), num(c.age, 40) + 1),
     spouseAge: c.spouseAge === "" || c.spouseAge == null ? null : num(c.spouseAge),
@@ -1404,7 +1447,7 @@ function normalizeRaw(s) {
     penSelf: num(s.pension.self?.monthly), penSelfAge: num(s.pension.self?.startAge, A("pension_age")),
     penSpouse: num(s.pension.spouse?.monthly), penSpouseAge: num(s.pension.spouse?.startAge, A("pension_age")),
     card: num(s.liab?.card), legacy: blank(s.legacy?.target) ? null : num(s.legacy.target),
-    goals: s.goals.map((g, i) => ({ rank: blank(g.rank) ? null : num(g.rank), i, name: (blank(g.rank) ? "" : `${num(g.rank)}순위 `) + (String(g.name || "").replace(/^\s*\d{1,2}\s*순위\s*/, "") || "목표"), age: goalAge(g.age), amount: num(g.amount), years: (g.type || (num(g.years, 1) > 1 ? "period" : "once")) === "once" ? 1 : Math.max(1, Math.round(num(g.years, 1))), tax: g.tax || "일반", growth: blank(g.growth) ? null : num(g.growth) / 100, extSrc: g.extSrc || "", extItems: Array.isArray(g.extItems) ? g.extItems : [], asset: g.asset || "", loanAmt: num(g.loanAmt), loanRate: num(g.loanRate) / 100, loanYears: Math.max(1, num(g.loanYears, 10)), loanKind: LOAN_KINDS.includes(g.loanKind) ? g.loanKind : "원리금균등", ext: !!g.ext, src: goalSrc(g), once: (g.type || (num(g.years, 1) > 1 ? "period" : "once")) === "once" })).sort((x, y) => (x.rank ?? 99) - (y.rank ?? 99) || x.i - y.i),
+    goals: s.goals.map((g, i) => ({ rank: blank(g.rank) ? null : num(g.rank), i, name: (blank(g.rank) ? "" : `${num(g.rank)}순위 `) + (String(g.name || "").replace(/^\s*\d{1,2}\s*순위\s*/, "") || "목표"), age: goalAge(g.age), atIdx: goalAt(g.age), amount: num(g.amount), years: (g.type || (num(g.years, 1) > 1 ? "period" : "once")) === "once" ? 1 : Math.max(1, Math.round(num(g.years, 1))), tax: g.tax || "일반", growth: blank(g.growth) ? null : num(g.growth) / 100, extSrc: g.extSrc || "", extItems: Array.isArray(g.extItems) ? g.extItems : [], asset: g.asset || "", loanAmt: num(g.loanAmt), loanRate: num(g.loanRate) / 100, loanYears: Math.max(1, num(g.loanYears, 10)), loanKind: LOAN_KINDS.includes(g.loanKind) ? g.loanKind : "원리금균등", ext: !!g.ext, src: goalSrc(g), once: (g.type || (num(g.years, 1) > 1 ? "period" : "once")) === "once" })).sort((x, y) => (x.rank ?? 99) - (y.rank ?? 99) || x.i - y.i),
     legacyRank: blank(s.legacy?.rank) ? null : num(s.legacy.rank),
     infl: num(s.assume.inflation) / 100, ig: num(s.assume.incomeGrowth) / 100, rtn: num(s.assume.returnRate) / 100, reg: num(s.assume.reGrowth) / 100,
   };
@@ -1497,6 +1540,8 @@ function npBasic(m, E) {
   let basic = 0;
   for (const [y, p] of Object.entries(byYear)) basic += LAW.npCoef(+y) * (+y <= 1998 ? A + 0.75 * B : A + B) * (p / P);
   basic *= 1 + (0.05 * n) / 12;
+  // 가입기간 10년 이상 20년 미만: 기본연금액의 50% + 10년 넘는 1개월마다 5/12%(국민연금법 §63①2, 국민연금공단 노령연금 안내 '가입기간 10년 50%(1개월마다 5/12% 증가)', 2026-11-14 확인)
+  if (P < 240) basic *= 0.5 + ((P - 120) * 0.05) / 12;
   const after2002 = sumB > 0 ? incAfter / sumB : 0; // 과세 대상 비율: 2002년 이후 가입분의 재평가 소득 비중(통합계산서 국민연금 시트)
   return { monthly: basic / 12, P, B, taxRatio: after2002 };
 }
@@ -1513,6 +1558,12 @@ function runEngine(p, extraMonthly = 0) {
   const liqRate = cashShare * E.cashRate + (1 - cashShare) * p.rtn;
   let houseVal = p.realEstate, houseOfficialRatio = E.officialRatio, oneHouse = E.oneHouse;
   const loans = p.loans.map((l) => { const n = Math.max(1, Math.round(l.years * 12)), r = l.rate / 12; return { ...l, bal: l.balance, n, r, g: Math.round((l.grace || 0) * 12), rcIdx: ymIdx(l.rateAt), pay: r === 0 ? l.balance / n : (l.balance * r) / (1 - Math.pow(1 + r, -n)) }; });
+  // 장기주택저당 이자 소득공제의 기준 연도 1월~기준일 달 이자: 지금 잔액에서 상환표를 거꾸로 되짚음(원리금균등 B전 = (B + 상환액) ÷ (1 + 월 금리))
+  const preMortInt = loans.filter((l) => l.deduct && l.bal > 0).reduce((t, l) => {
+    let b = l.bal, s = 0;
+    for (let k = 1; k < E.startM; k++) { const prev = l.kind === "원금균등" ? b + l.balance / l.n : l.kind === "만기일시" || l.kind === "마이너스통장" ? b : (b + l.pay) / (1 + l.r); s += prev * l.r; b = prev; }
+    return t + s;
+  }, 0);
   // 연금계좌: 과세제외(exempt)·이연퇴직소득(def, defTax)·그 밖(tax) 세 부분으로 나눠 관리
   const accts = (p.accounts || []).map((a) => ({ ...a, exempt: a.exempt || 0, def: a.deferred || 0, defTax0: a.deferredTax || 0, defBase: a.deferred || 0, tax: Math.max(0, a.now - (a.exempt || 0) - (a.deferred || 0)), r: a.rate ?? p.rtn, started: false, monthsLeft: 0 }));
   const people = E.people; // [{key, alive(idx), ...}]
@@ -1530,11 +1581,12 @@ function runEngine(p, extraMonthly = 0) {
     const hpCut = hv > 0 ? hpDebt * houseShare / hv : 0;
     const dep = E.lease && E.lease.owner === pp.key ? depositBal : 0; // 임차보증금 반환채권(금융재산 아님)
     const myProps = props.filter((x) => !x.sold && x.owner === pp.key), propV = myProps.reduce((t, x) => t + x.val, 0); // 다른 부동산은 배우자가 이어받음(배우자 몫에 먼저 넣음)
-    const estate = houseShare - hpCut + finPart + own + dep + propV;
+    const debt1 = pp.key === "self" ? loans.reduce((t, l) => t + Math.max(0, l.bal || 0), 0) : 0; // 사망일에 남은 대출(상속채무)
+    const estate = houseShare - hpCut + finPart + own + dep + propV - debt1;
     const legal = 1.5 / (1.5 + E.childCount);
         const spouseGets = sw.split ? Math.min(estate, estate * legal) : estate;
         const insE1 = inh.insEstate?.[pp.key] || 0; // 간주상속재산(계약자 = 피상속인, 수익자 = 자녀)
-        const tax = estate + insE1 > 0 ? inheritTax(estate + insE1, spouseGets, legal, Math.max(0, finPart + own + insE1), funeral, 0) /* 금융재산공제는 순금융재산(마이너스 유동성 = 금융채무 차감) 기준 — 통합계산서와 같음 */ : 0;
+        const tax = estate + insE1 > 0 ? inheritTax(estate + insE1, spouseGets, legal, Math.max(0, finPart + own + insE1 - debt1), funeral, 0) /* 금융재산공제는 순금융재산(마이너스 유동성 = 금융채무 차감) 기준 — 통합계산서와 같음 */ : 0;
         inh.tax1 = tax; inh.year1 = y; inh.death1Idx = dIdx; inh.estate1 = estate;
         const childPart = estate - spouseGets;
         inh.childFromFirst = childPart; inh.spouseHouse = E.houseOwner === pp.key ? (sw.split ? Math.min(1, Math.max(0, (spouseGets - finPart - own - dep - propV) / Math.max(1, houseShare))) : 1) : inh.spouseHouse;
@@ -1557,23 +1609,24 @@ function runEngine(p, extraMonthly = 0) {
     const houseShare = E.houseOwner === pp.key ? houseVal * (inh.spouseHouse ?? 1) : (inh.spouseHouse != null ? houseVal * inh.spouseHouse : 0);
     const hpCut = houseVal > 0 ? hpDebt * houseShare / houseVal : 0;
     const propV = props.reduce((t, x) => t + (x.sold ? 0 : x.val), 0), acqProps = props.reduce((t, x) => t + (x.sold ? 0 : x.val * x.ratio * (x.kind === "주택" ? 0.0296 : 0.0316)), 0);
-    const estate = houseShare - hpCut + liquid + own + (E.lease ? depositBal : 0) + propV; // 2차: 남은 보증금·다른 부동산 전부
+    const debt2 = loans.reduce((t, l) => t + Math.max(0, l.bal || 0), 0); // 사망일에 남은 대출(상속채무)
+    const estate = houseShare - hpCut + liquid + own + (E.lease ? depositBal : 0) + propV - debt2; // 2차: 남은 보증금·다른 부동산 전부, 남은 대출은 뺌
     const gap = inh.death1Idx != null ? (dIdx - inh.death1Idx) / 12 : 99;
     const short = gap > 0 && gap <= 10 ? 1 - 0.1 * (Math.ceil(+gap.toFixed(6)) - 1) : 0;
     const calc1 = inh.tax1 / 0.97;
     const credit = inh.estate1 > 0 ? calc1 * Math.min(1, (inh.house1 || 0) * (inh.spouseHouse ?? 0) / inh.estate1) * short : 0;
     const insE = inh.insEstate?.[pp.key] || 0; // 계약자가 피상속인인 보험금: 상속세 계산에만 더함(자녀는 extra로 받음)
-    const tax = estate + insE > 0 ? inheritTax(estate + insE, null, 0, Math.max(0, liquid + own + insE), funeral, credit) : 0;
+    const tax = estate + insE > 0 ? inheritTax(estate + insE, null, 0, Math.max(0, liquid + own + insE - debt2), funeral, credit) : 0;
     const acq = houseShare * houseOfficialRatio * 0.0296 + acqProps;
     const acq1 = (inh.acqChild || 0) * (inh.acqChildIdx != null ? Math.pow(1 + E.cashRate, Math.floor(dIdx / 12) - Math.floor(inh.acqChildIdx / 12)) : 1); // 1차 때 자녀가 낸 취득세(그동안의 기회비용 포함)
     const extra = (inh.extras || []).reduce((t, x) => t + x.amt * Math.pow(1 + E.cashRate, Math.max(0, dIdx - x.idx) / 12), 0); // 자녀가 받은 사망보험금(운용 포함)
     // 자녀가 연금계좌 잔액을 꺼낼 때 내는 소득세(사망 = 부득이한 인출, 연금소득 과세): 이연퇴직소득은 퇴직소득세 × 70/60/50%(수령 연차), 과세분은 3.3~5.5% — 통합계산서 CF E78
     const dAge = pp.ageAt(dIdx), ar = dAge < 70 ? 0.055 : dAge < 80 ? 0.044 : 0.033;
     const heirsTax = accts.filter((a) => a.type !== "DB" && (a.owner === "본인" ? "self" : "spouse") === pp.key).reduce((t, a) => {
-      const yrs = y - (a.firstDrawY ?? a.openY ?? E.startY) + 1, red = yrs <= 10 ? 0.7 : yrs <= 20 ? 0.6 : 0.5; // 수령 연차: 처음 꺼낸 해(없으면 계좌를 만든 해·기준 연도)부터
+      const yrs = redYear(a, y), red = yrs <= 10 ? 0.7 : yrs <= 20 ? 0.6 : 0.5; // 수령연차: 인출 때와 같은 셈(계산서 상속 E78)
       return t + a.def * (a.defBase > 0 ? (a.defTax0 * 1.1) / a.defBase : 0) * red + a.tax * ar;
     }, 0);
-    inh.heirsTax = heirsTax;
+    inh.heirsTax = heirsTax; Object.assign(inh, { estate2: estate, own2: own, liq2: liquid, house2: houseShare, credit2: credit, acq2: acq, acq1fv: acq1, funeralCash2: funeralCash, extra2: extra }); // 2차 상속 내역(점검용)
     const net = estate - tax - acq - funeralCash - heirsTax + houseVal * (inh.childHouseShare || 0) - hpDebt * (inh.childHouseShare || 0) - acq1 + extra;
     inh.tax2 = tax; inh.childNet = net / P; inh.childNetNominal = net; Y.events.push(`2차 상속세 ${Math.round(tax)}`);
   }
@@ -1601,7 +1654,12 @@ function runEngine(p, extraMonthly = 0) {
   let depositBal = E.lease ? E.lease.deposit : 0, rentNow = E.lease ? E.lease.rent : 0; // 임차보증금(돌려받을 돈, 수익 없음)·월세
   let otherHeld = (E.others || []).reduce((t, o) => t + (o.atIdx != null && o.atIdx < start ? 0 : o.amount), 0); // 기타자산: 받기 전까지 순자산에만
   const newYear = (y) => ({ year: y, months: 0, earn: 0, gross: 0, social: 0, incTax: 0, pension: 0, npGross: 0, other: 0, lump: 0, contribOut: 0, living: 0, insurance: 0, loanPay: 0, interest: 0, principal: 0, goalOut: 0, propTax: 0, withdraw: 0, wTax: 0, ret: 0, extra: 0, events: [], medical: 0, eduUni: 0, privByPerson: {}, careLoss: 0, gift: 0, giftTax: 0, ds: 0, inhTax: 0, npContrib: 0 });
+  // DC 부담금: 그해 낸 부담금 합계를 납입 기간 가운데에 낸 것으로 보고 (1 + 수익률)^(납입 개월 ÷ 24)만큼 불려 더함(보고서 계산서 퇴직급여 시트 G열)
+  // 대안 연금저축은 기준일 다음 달 개설로 봄 → 연금수령연차 1년차 = 가입 5년이 지나는 해(시행령 §40의2④, 보고서 계산서 p_psa_y1)
+  const psaY1 = Math.floor((start + 60) / 12);
+  const dcFlush = (ac) => { if (ac.dcAcc) { ac.tax += ac.dcAcc * Math.pow(1 + ac.r, ac.dcN / 24); ac.dcAcc = 0; ac.dcN = 0; } };
   const flush = () => {
+    for (const ac of accts) dcFlush(ac);
     if (!Y) return;
     const t = Y.year - E.startY, age = p.age + t, sAge = p.spouseAge == null ? null : p.spouseAge + t;
     // ── 근로소득세(세전 연봉을 넣은 사람만): 그해에는 원천징수(간이세액 기준)만 내고, 연말정산 차액은 다음 해에 돌려받음 ──
@@ -1620,7 +1678,7 @@ function runEngine(p, extraMonthly = 0) {
       const sumK = (k) => sumK0(k) + (k === "rent" && E.lease?.credit && self ? (Y.rentPaid || 0) * ann : 0); // 월세 세액공제: 낸 월세 자동 반영(세대주 = 본인)
       const housingDed = Math.min(400, (g <= 7000 ? Math.min(sumK("subs"), 300) * 0.4 : 0) + sumK("lease") * 0.4);
       const extraDed = 100 * sumK("old") + 200 * sumK("disabled") + (sumK("single") > 0 ? 100 : sumK("woman") > 0 && g - earnedDeduction(g) <= 3000 ? 50 : 0);
-      const mInt = self && pp.key === E.mortgageOwner ? Math.min(2000, (Y.mortInterest || 0) * (first ? 12 / Y.months : 1)) : 0;
+      const mInt = self && pp.key === E.mortgageOwner ? Math.min(2000, (Y.mortInterest || 0) + (first ? preMortInt : 0)) : 0; // 첫해: 기준일 전 달 이자는 상환표를 거꾸로 되짚어 더함(1~12월 실제 이자)
       const ded = earnedDeduction(g) + 150 * dependents + (soc.np + soc.health) * ann + mInt + cardDed + housingDed + extraDed;
       const base = Math.max(0, g - ded), calc = progressive(base, LAW.incomeTax);
       const withheld = Math.max(0, calc - earnedCredit(calc, g) - (self ? E.childCredit(Y.year) : 0));
@@ -1640,7 +1698,13 @@ function runEngine(p, extraMonthly = 0) {
         const r = g <= 5500 ? 0.15 : 0.12;
         const pc = Y.pcBy?.[pp.key] || { psa: 0, irp: 0 }; // 연금계좌 카드의 납입액(자동) + 공제 항목의 추가 납입
         const pens = Math.min(900, Math.min(600, pc.psa + sumK("psaPay") + (self ? Y.psaContrib || 0 : 0)) + pc.irp + sumK("irpPay")) * r;
-        settled = Math.max(0, settled - Math.min(settled, pens));
+        const usedPen = Math.min(settled, pens);
+        settled = Math.max(0, settled - usedPen);
+        // 대안 연금저축 납입 중 세액공제를 실제로 받은 금액만 나중에 과세, 나머지(결정세액이 없어 공제를 못 받은 몫)는 과세제외 원금(보고서 계산서 CE·DK열)
+        if (self && (Y.psaContrib || 0) > 0) {
+          const credited = Math.min(Y.psaContrib, usedPen / r), lost = Y.psaContrib - credited, ac = accts.find((a) => a.psaAlt && a.owner === "본인");
+          if (lost > 1e-9 && ac) { const mv = Math.min(lost, ac.tax); ac.tax -= mv; ac.exempt += mv; }
+        }
       }
       (Y.taxCalc ||= {})[pp.key] = { g, base, withheld, settled, other: withheld - settled, child: self ? E.childCredit(Y.year) : 0 };
       const cash = withheld * 1.1 * frac;
@@ -1689,7 +1753,8 @@ function runEngine(p, extraMonthly = 0) {
     const regular = (Y.living + Y.insurance + Y.interest + Y.propTax + Y.social + Y.npContrib + Y.incTax + (Y.refundIn || 0) + Y.principal) / Math.max(1, Y.months);
     const buffer = regular * E.bufferMonths;
     // 본인 IRP 균등 수령(대안: lv): 잔액 ÷ 남은 연수(세전)를 먼저 받고, 그래도 모자라면 인출 규칙
-    if (sw.lv && Y.year >= sw.lvFrom && Y.year <= sw.lvTo) for (const ac of accts) if ((ac.owner === (sw.lvWho || "본인") || (ac.fromSelf && (sw.lvWho || "본인") === "본인")) && ac.type === "IRP" && ac.started === false) { const oAge = ac.owner === "본인" ? age : sAge; if (oAge == null || oAge < 55) continue; const left = Math.max(1, sw.lvTo - Y.year + 1); const amt = (ac.exempt + ac.def + ac.tax) / left; if (amt > 0) withdrawFrom(ac, amt, oAge, true); } // 배우자가 승계한 뒤에도 이어서
+    // 균등 수령은 연금계좌 인출 규칙의 한 부분(보고서 계산서: 인출 규칙을 끄면 IRP 인출 없음, EJ열)
+    if (sw.lv && sw.draw && Y.year >= sw.lvFrom && Y.year <= sw.lvTo) for (const ac of accts) if ((ac.owner === (sw.lvWho || "본인") || (ac.fromSelf && (sw.lvWho || "본인") === "본인")) && ac.type === "IRP" && ac.started === false) { const oAge = ac.owner === "본인" ? age : sAge; if (oAge == null || oAge < 55) continue; const left = Math.max(1, sw.lvTo - Y.year + 1); const amt = (ac.exempt + ac.def + ac.tax) / left; if (amt > 0) withdrawFrom(ac, amt, oAge, true); } // 배우자가 승계한 뒤에도 이어서
     if (sw.draw && liquid < buffer) drawDown(buffer - liquid, age, sAge);
     // 배우자가 연금외수령한 퇴직소득이 100만 원을 넘으면 그해 배우자 기본공제(150)를 잃음 → 다음 해 환급에서 뺌(소득세법 §50①2, 보고서 계산서 HC열)
     for (const pp of people) {
@@ -1705,7 +1770,7 @@ function runEngine(p, extraMonthly = 0) {
     const debt = loans.reduce((s, l) => s + Math.max(0, l.bal), 0) + hpDebt;
     const inflow = Y.earn + Y.pension + Y.other + Y.lump + Y.withdraw + Y.ds;
     const outflow = Y.living + Y.insurance + Y.loanPay + Y.goalOut + Y.contribOut + Y.propTax + Y.incTax + Y.wTax + Y.gift + Y.giftTax + Y.inhTax + Y.npContrib - Y.extra;
-    rows.push({ t, year: Y.year, months: Y.months, buffer, itemBy: Y.itemBy || {}, retLiv: Y.retLiv || 0, careLoss: Y.careLoss || 0, gift: Y.gift || 0, age, sAge, earn: Y.earn, gross: Y.gross, social: Y.social, incTax: Y.incTax, pension: Y.pension, other: Y.other, lump: Y.lump + Y.withdraw, contribOut: Y.contribOut + Y.npContrib, acctBal, living: Y.living, insurance: Y.insurance, loanPay: Y.loanPay, goalOut: Y.goalOut + Y.gift, propTax: Y.propTax, tax: Y.incTax + (Y.tax_w || 0) + (Y.retTax || 0) + Y.giftTax + Y.inhTax, goalNames: Y.goalNames || [], net: inflow - outflow, ret: Y.ret, fin: liquid, re: houseVal, debt, netWorth: liquid + acctBal + houseVal + otherHeld + depositBal + Object.values(yellowBal).reduce((t, v) => t + v, 0) + props.reduce((t, x) => t + (x.sold ? 0 : x.val), 0) - debt, deposit: depositBal, inf, events: Y.events, acctBy: accts.map((a) => ({ owner: a.owner, type: a.type, v: a.exempt + a.def + a.tax, def: a.def })) });
+    rows.push({ t, year: Y.year, months: Y.months, buffer, taxCalc: Y.taxCalc || null, itemBy: Y.itemBy || {}, retLiv: Y.retLiv || 0, careLoss: Y.careLoss || 0, gift: Y.gift || 0, age, sAge, earn: Y.earn, gross: Y.gross, social: Y.social, incTax: Y.incTax, pension: Y.pension, other: Y.other, lump: Y.lump + Y.withdraw, contribOut: Y.contribOut + Y.npContrib, acctBal, living: Y.living, insurance: Y.insurance, loanPay: Y.loanPay, goalOut: Y.goalOut + Y.gift, propTax: Y.propTax, tax: Y.incTax + (Y.tax_w || 0) + (Y.retTax || 0) + Y.giftTax + Y.inhTax, goalNames: Y.goalNames || [], net: inflow - outflow, ret: Y.ret, fin: liquid, re: houseVal, debt, netWorth: liquid + acctBal + houseVal + otherHeld + depositBal + Object.values(yellowBal).reduce((t, v) => t + v, 0) + props.reduce((t, x) => t + (x.sold ? 0 : x.val), 0) - debt, deposit: depositBal, inf, events: Y.events, acctBy: accts.map((a) => ({ owner: a.owner, type: a.type, v: a.exempt + a.def + a.tax, def: a.def })) });
   };
   // 연금계좌에서 amt(세후 필요액)를 꺼냄: 과세제외 → 이연퇴직소득 → 그 밖(사적연금 1,500만 한도 안 3.3~5.5%, 넘으면 16.5%)
   function withdrawFrom(ac, need, ownerAge, grossMode = false) {
@@ -1720,7 +1785,7 @@ function runEngine(p, extraMonthly = 0) {
       const g2 = take("def", Math.min(0.99, t)) || 0; // 한도 밖은 연금외수령(이연퇴직소득세 100%)
       if (g2 > 0) (Y.defOutBy ||= {})[ac.owner === "본인" ? "self" : "spouse"] = (Y.defOutBy[ac.owner === "본인" ? "self" : "spouse"] || 0) + g2;
     }
-    const key = ac.owner === "본인" ? "self" : "spouse", used = Y.privByPerson[key] || 0, ageRate = ownerAge < 70 ? 0.055 : ownerAge < 80 ? 0.044 : 0.033;
+    const key = keyOf(ac), used = Y.privByPerson[key] || 0, ageRate = ownerAge < 70 ? 0.055 : ownerAge < 80 ? 0.044 : 0.033;
     const room = Math.max(0, LAW.privLimit - used);
     if (left() > 0 && ac.tax > 0) { const g1 = Math.min(ac.tax, room, grossMode ? left() : left() / (1 - ageRate)); ac.tax -= g1; got += g1 * (1 - ageRate); tax += g1 * ageRate; Y.privByPerson[key] = used + g1; }
     if (!grossMode) take("tax", 0.165); // 균등 수령은 1,500만 원 안에서만(넘는 운용수익은 남겨 둠)
@@ -1730,14 +1795,22 @@ function runEngine(p, extraMonthly = 0) {
   }
   // 연금계좌 공통 규칙 — 이연퇴직소득세 감면: 실제 수령 10년 이하 70%·20년 이하 60%·넘으면 50%(소득세법 §129①5의3)
   // 연금수령한도: 연초 평가액 × 1.2 ÷ (11 − 기산연차), 11년차부터 한도 없음(소득세법 시행령 §40의2). 한도를 넘으면 연금외수령(이연퇴직소득세 100%, 운용수익 16.5%)
-  const redOf = (ac) => { const k = Y.year - (ac.firstDrawY ?? Y.year) + 1; return k <= 10 ? 0.7 : k <= 20 ? 0.6 : 0.5; };
+  // 수령연차(보고서 계산서와 같게 해마다 셈): 퇴직 때 옮긴 IRP는 옮긴 다음 해가 1년차(그해도 1년차), 기준일에 이미 있던 계좌는 기준 연도가 1년차(계산서 EC·EM열)
+  // 사적연금 1,500만 원·세율을 따지는 사람: 승계한 계좌도 물려준 사람이 떠난 해까지는 그 사람 몫(계산서: 사망한 해는 생존 개월 > 0이라 부부 각자 계산)
+  const keyOf = (ac) => {
+    const k = ac.owner === "본인" ? "self" : "spouse";
+    if (ac.fromKey && ac.fromKey !== k) { const d = people.find((x) => x.key === ac.fromKey); if (d && Math.floor(d.deathIdx / 12) === Y.year) return ac.fromKey; }
+    return k;
+  };
+  const redYear = (ac, y) => (ac.irpFromRetire ? Math.max(1, y - ac.openY) : y - E.startY + 1);
+  const redOf = (ac) => { const k = redYear(ac, Y.year); return k <= 10 ? 0.7 : k <= 20 ? 0.6 : 0.5; };
   const defTaxRate = (ac) => (ac.defBase > 0 ? (ac.defTax0 * 1.1) / ac.defBase : 0);
   const limLeft = (ac) => {
     if (ac.limY !== Y.year) {
       ac.limY = Y.year;
       const o = people.find((x) => x.key === (ac.owner === "본인" ? "self" : "spouse"));
-      const y55 = o ? Math.ceil((o.birthIdx + 55 * 12) / 12) : E.startY; // 연초에 이미 55세인 첫 해부터 1년차(보고서 계산서와 같음)
-      const k = Y.year - Math.max(ac.openY ?? E.startY, y55) + 1;
+      const y55 = o ? Math.floor((o.birthIdx + 55 * 12) / 12) : E.startY; // 55세가 되는 해부터 1년차(보고서 계산서 EA열: 2027 = 1년차)
+      const k = Y.year - Math.max(ac.psaY1 ?? ac.openY ?? E.startY, y55) + 1;
       // 55세 이후 의료비 인출(의료비연금계좌)은 한도 계산에서 뺌
       ac.limLeft = (k < 1 ? 0 : k >= 11 ? Infinity : ((ac.boy ?? ac.exempt + ac.def + ac.tax) * 1.2) / (11 - k)) + (Y.medical || 0);
     }
@@ -1745,7 +1818,7 @@ function runEngine(p, extraMonthly = 0) {
   };
   function drawDown(shortfall, age, sAge) {
     // 세금이 적은 순서(모든 계좌를 통틀어): ① 과세제외 원금 → ② 이연퇴직소득(한도 안 감면·한도 밖 100%를 세율 낮은 순서로) → ③ 운용수익(한도 안·사람별 1,500만 안 3.3~5.5%) → 그 밖 16.5%
-    const ownerAge = (ac) => (ac.owner === "본인" ? age : sAge);
+    const ownerAge = (ac) => (keyOf(ac) === "self" ? age : sAge);
     const medLimit = Y.medical > 0 ? Y.medical + 200 + (Y.year === E.startY ? num(sw.bdExtra) : 0) : 0;
     const ok = (ac) => ac.type !== "DB" && ac.type !== "DC" && ownerAge(ac) != null;
     const under55 = (ac) => ownerAge(ac) < 55;
@@ -1762,19 +1835,41 @@ function runEngine(p, extraMonthly = 0) {
       return net;
     };
     const lim = (ac) => (under55(ac) ? Infinity : Math.max(0, limLeft(ac)));
+    // 대안 연금저축(기준일 다음 달 개설로 봄): 과세분은 연금 개시 뒤에만 — 개시 = 본인 은퇴 다음 달(그 전까지 납입), 가입 5년·55세 이후(시행령 §40의2) · 과세제외 원금은 언제든(보고서 계산서 DM·DY열)
+    const meP = people.find((x) => x.key === "self"), psaStart = Math.max(meP.retireIdx, E.startY * 12 + E.startM - 1 + 60, meP.birthIdx + 55 * 12);
+    const taxOK = (ac) => !(ac.psaAlt && Y.year * 12 + 11 < psaStart);
     const list = accts.filter(ok);
     // 과세제외 원금은 한도와 관계없이 꺼낼 수 있지만, 꺼낸 만큼 그해 한도를 씀(보고서 계산서 FK열)
     for (const ac of list.filter((x) => x.exempt > 0)) { const g = pull(ac, "exempt", 0, shortfall); if (!under55(ac)) ac.limLeft = limLeft(ac) - g; shortfall -= g; }
-    const cands = [];
+    // 이연퇴직소득: 배우자 몫(한도 안 → 한도 밖) → 본인 몫(한도 안 → 한도 밖) 순서(보고서 4-1 "아내·남편 이연퇴직소득", 계산서 인출 구간 ②~⑤)
+    const cands = [], who = (ac) => (ac.type !== "연금저축" && (ac.owner === "본인" || ac.fromSelf) ? 1 : 0);
     for (const ac of list.filter((x) => x.def > 0)) { const t = defTaxRate(ac); cands.push({ ac, rate: t * redOf(ac), inL: true }); if (!under55(ac)) cands.push({ ac, rate: t, inL: false }); }
-    cands.sort((a, b) => a.rate - b.rate);
+    cands.sort((a, b) => who(a.ac) - who(b.ac) || (a.inL === b.inL ? a.rate - b.rate : a.inL ? -1 : 1));
     for (const c of cands) shortfall -= pull(c.ac, "def", Math.min(0.99, c.rate), shortfall, c.inL ? lim(c.ac) : Infinity, c.inL);
     const ageRate = (ac) => (ownerAge(ac) < 70 ? 0.055 : ownerAge(ac) < 80 ? 0.044 : 0.033);
-    for (const ac of list.filter((x) => x.tax > 0).sort((x, y) => ageRate(x) - ageRate(y))) {
-      const key = ac.owner === "본인" ? "self" : "spouse", room = Math.max(0, LAW.privLimit - (Y.privByPerson[key] || 0));
+    // 계좌 순서(보고서 계산서 인출 구간 ⑥~⑱): 본인 몫 IRP(승계분 포함)·연금저축·배우자 몫 IRP — 단계마다 순서가 다름
+    const orig = (ac) => (ac.type === "연금저축" ? "psa" : ac.owner === "본인" || ac.fromSelf ? "h" : "w");
+    const by = (o) => (x, y) => o[orig(x)] - o[orig(y)];
+    for (const ac of list.filter((x) => x.tax > 0 && taxOK(x)).sort((x, y) => ageRate(x) - ageRate(y) || by({ h: 0, psa: 1, w: 2 })(x, y))) {
+      const key = keyOf(ac), room = Math.max(0, LAW.privLimit - (Y.privByPerson[key] || 0));
       if (room > 0) { const keep = ac.tax; ac.tax = Math.min(ac.tax, room); const got = pull(ac, "tax", ageRate(ac), shortfall, lim(ac), true); const used = Math.min(keep, room) - ac.tax; ac.tax = keep - used; Y.privByPerson[key] = (Y.privByPerson[key] || 0) + used; shortfall -= got; }
     }
-    for (const ac of list.filter((x) => x.tax > 0)) shortfall -= pull(ac, "tax", 0.165, shortfall);
+    // ④ 연금수령한도 밖 과세분: 연금외수령(기타소득 16.5%) — 사적연금 1,500만 원 계산에 넣지 않음(보고서 계산서 ⑨~⑪)
+    for (const ac of list.filter((x) => x.tax > 0 && taxOK(x) && !under55(x)).sort(by({ psa: 0, w: 1, h: 2 }))) { const out = Math.max(0, ac.tax - lim(ac)); if (out > 0) shortfall -= pull(ac, "tax", 0.165, shortfall, out); }
+    // ⑤ 그래도 모자라면 그 사람의 사적연금이 연 1,500만 원을 넘음 → 그해 사적연금 전액을 16.5%(분리과세)로: 이미 낸 3.3~5.5%와의 차액을 더 냄
+    //    부부가 모두 살아 있으면 배우자 쪽을 먼저 넘김(소득세법 §14③9 · 보고서 계산서 ⑫~⑮·추가세 GW열)
+    for (const key of ["spouse", "self"]) {
+      if (shortfall <= 1e-9) break;
+      const mine = list.filter((x) => x.tax > 0 && taxOK(x) && !under55(x) && keyOf(x) === key && lim(x) > 0).sort(by({ h: 0, w: 1, psa: 2 }));
+      if (!mine.length) continue;
+      if (!(Y.ppOver ||= {})[key]) {
+        const extra = (Y.privByPerson[key] || 0) * (0.165 - ageRate(mine[0]));
+        if (extra > 0) { liquid -= extra; Y.tax_w = (Y.tax_w || 0) + extra; Y.ppExtra = (Y.ppExtra || 0) + extra; shortfall += extra; }
+        Y.ppOver[key] = true;
+      }
+      for (const ac of mine) { const before = ac.tax; shortfall -= pull(ac, "tax", 0.165, shortfall, lim(ac), true); Y.privByPerson[key] = (Y.privByPerson[key] || 0) + (before - ac.tax); }
+    }
+    for (const ac of list.filter((x) => x.tax > 0 && taxOK(x)).sort(by({ psa: 0, w: 1, h: 2 }))) shortfall -= pull(ac, "tax", 0.165, shortfall);
   }
 
 
@@ -1869,7 +1964,7 @@ function runEngine(p, extraMonthly = 0) {
     const nomAdj = (it) => (it.infl ? 1 : 1 / P) * (it.car ? 1 - carX : 1); // 물가 반영 안 하는 항목(명목 금액)
     if (working) base = p.expItems ? p.expItems.reduce((s, it) => s + (on(it) ? it.amount * nomAdj(it) * (it.hh ? Math.pow(E.hhSize(idx) / E.hh0, E.theta) : 1) : 0), 0) : p.living;
     if (working) {
-      const core = (p.expItems || []).filter((it) => !it.med && (it.hh || (it.fromIdx === -Infinity && it.untilIdx === Infinity)));
+      const core = (p.expItems || []).filter((it) => !it.med && !it.car && (it.hh || (it.fromIdx === -Infinity && it.untilIdx === Infinity))); // 카드 사용액 비례 기준: 기본 생활비(자동차세 제외)
       const c0 = core.reduce((s, it) => s + it.amount, 0) + p.insurance, c1 = core.reduce((s, it) => s + it.amount * (it.hh ? Math.pow(E.hhSize(idx) / E.hh0, E.theta) : 1), 0) + p.insurance;
       Y.cardW = (Y.cardW || 0) + (c0 > 0 ? c1 / c0 : 1);
     }
@@ -1950,8 +2045,9 @@ function runEngine(p, extraMonthly = 0) {
     }
     // ── 재무목표: 특정 시점 금액은 그해 첫 달에 한 번, 기간별 금액은 그해 남은 달에 나눠서(통합계산서의 연중 균등 유출과 같음) ──
     {
-      const gi = p.goals.filter((g) => age >= g.age && age < g.age + g.years && (g.once ? Y.months === 1 : true));
-      const share = (g) => (g.once ? 1 : 1 / (Y.year === E.startY ? 13 - E.startM : 12));
+      const at = (g) => Math.max(start, g.atIdx); // 지난 달이면 첫 달
+      const gi = p.goals.filter((g) => (g.atIdx != null ? (g.once ? idx === at(g) : idx >= at(g) && idx < g.atIdx + g.years * 12) : age >= g.age && age < g.age + g.years && (g.once ? Y.months === 1 : true)));
+      const share = (g) => (g.once ? 1 : g.atIdx != null ? 1 / 12 : 1 / (Y.year === E.startY ? 13 - E.startM : 12));
       for (const g of gi) { if (g.ext) continue; /* 다른 칸에서 이미 계산된 목표: 판정만 */ const v = share(g) * g.amount * (g.growth != null ? Math.pow(1 + g.growth, Math.max(0, y - E.startY)) : P) /* 목표별 상승률(비우면 물가) */ * (sw.scholar && g.tax === "교육비" ? 1 - Math.min(1, num(sw.scholarPct) / 100) : 1); /* 대안: 국가장학금 */ Y.goalOut += v; liquid -= v;
         if (g.once && g.asset && v > 0) { // 자산을 만드는 목표: 산 자산이 순자산으로 남음
           if (g.asset === "기타자산") { otherHeld += v; Y.events.push(`${g.name} 자산 취득 ${Math.round(v)}`); }
@@ -1964,6 +2060,7 @@ function runEngine(p, extraMonthly = 0) {
         }
         if (g.tax === "의료비") Y.medical += v; if (g.tax === "교육비") { Y.eduUni += v; (Y.eduBy ||= {})[g.gid ?? g.name] = (Y.eduBy[g.gid ?? g.name] || 0) + v; } }
       if (Y.months === 1) Y.goalNames = gi.map((g) => g.name);
+      else for (const g of gi) if (!Y.goalNames.includes(g.name)) Y.goalNames.push(g.name); // 연월로 넣어 그해 중간에 시작하는 목표
     }
     // ── 연금계좌 ──
     for (const ac of accts) {
@@ -1981,13 +2078,14 @@ function runEngine(p, extraMonthly = 0) {
       }
       if (ac.type === "DC" && !ac.started && idx < owner.retireIdx && owner.gross && !(owner.dcIdx != null && idx <= owner.dcIdx)) ac.dcPend = owner.wageAt(idx) / 12 / 12; // DC 부담금은 전환 다음 달부터, 그달 중간에 들어온 것으로(아래 운용 뒤 반달치 수익)
       if (!ac.started && idx >= ac.startIdx) {
+        dcFlush(ac);
         ac.started = true;
         if (ac.type === "DB" || ac.type === "DC") {
           // 퇴직급여: DB는 퇴직 직전 평균임금 × 재직일수, DC는 적립금
           let amt = ac.type === "DB" ? (ac.dbAmount ?? (owner.gross ? avgWage30(owner.wageAt(owner.retireIdx - 1), owner.bonus) * owner.daysAt(owner.retireIdx) / 365 : ac.exempt + ac.def + ac.tax)) : ac.exempt + ac.def + ac.tax;
           const rtax = retireTax(amt, owner.serviceYears(owner.retireIdx)) * 1.1;
           Y.events.push(`퇴직급여 ${Math.round(amt)}`);
-          if (sw.irp && ac.owner === "본인") { ac.type = "IRP"; ac.def = amt; ac.defBase = amt; ac.defTax0 = rtax / 1.1; ac.tax = 0; ac.exempt = 0; ac.r = E.dcRate; ac.started = false; ac.startIdx = Infinity; ac.openY = y; ac.boy = amt; ac.boyY = y; Y.events.push("IRP 이전"); }
+          if (sw.irp && ac.owner === "본인") { ac.type = "IRP"; ac.irpFromRetire = true; ac.def = amt; ac.defBase = amt; ac.defTax0 = rtax / 1.1; ac.tax = 0; ac.exempt = 0; ac.r = E.dcRate; ac.started = false; ac.startIdx = Infinity; ac.openY = y; ac.boy = amt; ac.boyY = y; Y.events.push("IRP 이전"); }
           else { Y.lump += amt - rtax; Y.incTax += 0; liquid += amt - rtax; Y.retTax = (Y.retTax || 0) + rtax; ac.exempt = ac.def = ac.tax = 0; }
           if (!(sw.irp && ac.owner === "본인")) continue;
         } else if (ac.payout === "일시금") { withdrawFrom(ac, Infinity, owner.ageAt(idx)); continue; }
@@ -2008,7 +2106,7 @@ function runEngine(p, extraMonthly = 0) {
       }
       if (ac.boyY !== Y.year) { ac.boyY = Y.year; ac.boy = ac.exempt + ac.def + ac.tax; } // 연금수령한도용 연초 평가액
       const g = mR(ac.r); if (ac.type !== "DB" && ac.noGrowIdx !== idx) { const gr = (ac.exempt + ac.def + ac.tax) * g; ac.tax += gr; }
-      if (ac.dcPend) { ac.tax += ac.dcPend * Math.pow(1 + ac.r, 1 / 24); ac.dcPend = 0; }
+      if (ac.dcPend) { ac.dcAcc = (ac.dcAcc || 0) + ac.dcPend; ac.dcN = (ac.dcN || 0) + 1; ac.dcPend = 0; } // 그해 부담금은 모아 두었다가 연말(또는 퇴직 때) 한꺼번에
     }
     // ── 다운사이징(대안: ds) ──
     if (sw.ds && !sold && y === sw.dsY && mo === sw.dsM && houseVal > 0) {
@@ -2026,19 +2124,21 @@ function runEngine(p, extraMonthly = 0) {
       if (sw.psa && (me.ageAt(idx) >= 60) && E.houseBuyPrice > 0 && houseVal * houseOfficialRatio <= 120000) toPsa = Math.min(sw.psaCap, sale - buy, Math.max(0, netIn));
       houseVal = buy; Y.ds += netIn - toPsa; liquid += netIn - toPsa;
       // 연금저축 납입은 그해 6월 말(연중 가운데)에 — 통합계산서의 연중 납입(반년 운용)과 같게. 6월이 지났으면 바로
-      if (toPsa > 0) pendingPsa = { amt: toPsa, idx: mo <= 6 ? y * 12 + 5 : idx, held: mo <= 6 };
+      if (toPsa > 0) pendingPsa = { amt: toPsa, idx: mo <= 6 ? y * 12 + 5 : idx, held: mo <= 6, lateM: mo > 6 ? mo - 6 : 0 };
       Y.events.push(`다운사이징 순유입 ${Math.round(netIn)}${toPsa ? ` · 연금저축 ${Math.round(toPsa)}` : ""}`);
     }
     if (pendingPsa && idx === pendingPsa.idx) {
+      // 7월 이후에 판 해도 그해 납입은 반년 운용으로 봄(보고서 계산서 연 단위 방식: 기중 납입 = (1 + 수익률)^(½)) — 모자란 개월만큼의 수익은 운용수익(과세분)으로
+      const bonus = pendingPsa.lateM ? pendingPsa.amt * (Math.pow(1 + E.psaRate, pendingPsa.lateM / 12) - 1) : 0;
       const psaAc = accts.find((a) => a.owner === "본인" && a.type === "연금저축" && a.startIdx === Infinity);
-      if (psaAc) psaAc.exempt += pendingPsa.amt;
-      else accts.push({ owner: "본인", type: "연금저축", exempt: pendingPsa.amt, def: 0, defBase: 0, defTax0: 0, tax: 0, r: E.psaRate, started: false, startIdx: Infinity, contrib: 0, contribUntil: 0, payout: "연금", openY: y });
+      if (psaAc) { psaAc.exempt += pendingPsa.amt; psaAc.tax += bonus; }
+      else accts.push({ owner: "본인", type: "연금저축", psaAlt: true, psaY1: psaY1, exempt: pendingPsa.amt, def: 0, defBase: 0, defTax0: 0, tax: bonus, r: E.psaRate, started: false, startIdx: Infinity, contrib: 0, contribUntil: 0, payout: "연금", openY: y });
       pendingPsa = null;
     }
     // ── 연금저축 정기 납입(대안: psa) ──
     if (sw.psa && num(sw.psaReg) > 0 && mo === 6 && y >= num(sw.psaFrom) && y <= num(sw.psaTo) && me.aliveIdx(idx)) {
       let ac = accts.find((a) => a.owner === "본인" && a.type === "연금저축");
-      if (!ac) { ac = { owner: "본인", type: "연금저축", exempt: 0, def: 0, defBase: 0, defTax0: 0, tax: 0, r: E.psaRate, started: false, startIdx: Infinity, contrib: 0, contribUntil: 0, payout: "연금" }; accts.push(ac); }
+      if (!ac) { ac = { owner: "본인", type: "연금저축", psaAlt: true, psaY1: psaY1, exempt: 0, def: 0, defBase: 0, defTax0: 0, tax: 0, r: E.psaRate, started: false, startIdx: Infinity, contrib: 0, contribUntil: 0, payout: "연금" }; accts.push(ac); }
       const c = num(sw.psaReg), cr = idx < me.retireIdx ? Math.min(c, 600) : 0;
       ac.tax += cr; ac.exempt += c - cr; liquid -= c; Y.contribOut += c; Y.psaContrib = (Y.psaContrib || 0) + cr;
     }
@@ -2073,7 +2173,7 @@ function runEngine(p, extraMonthly = 0) {
       }
     }
     if (pendingInh && idx === pendingInh.idx) { Y.inhTax += pendingInh.amt; liquid -= pendingInh.amt; Y.events.push(`상속세 납부 ${Math.round(pendingInh.amt)}`); pendingInh = null; }
-    if (E.lockedAmt > 0 && idx === E.lockedIdx) { const v = E.lockedAmt * Math.pow(1 + E.cashRate, Math.max(0, idx - start) / 12); liquid += v; Y.events.push(`예금 만기 ${Math.round(v)}`); }
+    if (E.lockedAmt > 0 && idx === E.lockedIdx) { const v = E.lockedMat ?? E.lockedAmt * Math.pow(1 + E.cashRate, Math.max(0, idx - start) / 12); /* 만기 수령액을 넣었으면 그 값 */ liquid += v; Y.events.push(`예금 만기 ${Math.round(v)}`); }
     // ── 수익·물가 ──
     if (pend1 && mo === 12) pend1.house = houseVal; // 주택은 그해 시세(연말 상승 전)
     if (mo === 12) houseVal *= 1 + p.reg;
@@ -2107,14 +2207,15 @@ function buildE(s, p, plan) {
   (s.customAlts || []).forEach((c, k) => {
     if (c.kind !== "새 목표" || !num(sw.customOn?.[c.id]) || blank(c.amount) || blank(c.age)) return;
     const once = (c.type || "once") === "once", mm = /^\s*(\d{4})/.exec(String(c.age));
-    p.goals.push({ rank: blank(c.rank) ? null : num(c.rank), i: 10000 + k, gid: "n_" + c.id, name: (blank(c.rank) ? "" : `${num(c.rank)}순위 `) + (c.name || "새 목표"), age: mm ? p.age + (+mm[1] - Math.floor(startIdx / 12)) : num(c.age), amount: num(c.amount), years: once ? 1 : Math.max(1, Math.round(num(c.years, 1))), tax: c.tax || "일반", growth: blank(c.growth) ? null : num(c.growth) / 100, extSrc: "", extItems: [], asset: once ? c.asset || "" : "", loanAmt: once ? num(c.loanAmt) : 0, loanRate: num(c.loanRate) / 100, loanYears: Math.max(1, num(c.loanYears, 10)), loanKind: LOAN_KINDS.includes(c.loanKind) ? c.loanKind : "원리금균등", ext: false, src: "4단계 추가", once, added4: true });
+    p.goals.push({ rank: blank(c.rank) ? null : num(c.rank), i: 10000 + k, gid: "n_" + c.id, name: (blank(c.rank) ? "" : `${num(c.rank)}순위 `) + (c.name || "새 목표"), age: mm ? p.age + (+mm[1] - Math.floor(startIdx / 12)) : num(c.age), atIdx: adjAt(c.age), amount: num(c.amount), years: once ? 1 : Math.max(1, Math.round(num(c.years, 1))), tax: c.tax || "일반", growth: blank(c.growth) ? null : num(c.growth) / 100, extSrc: "", extItems: [], asset: once ? c.asset || "" : "", loanAmt: once ? num(c.loanAmt) : 0, loanRate: num(c.loanRate) / 100, loanYears: Math.max(1, num(c.loanYears, 10)), loanKind: LOAN_KINDS.includes(c.loanKind) ? c.loanKind : "원리금균등", ext: false, src: "4단계 추가", once, added4: true });
   });
   p.goals.sort((x, y) => (x.rank ?? 99) - (y.rank ?? 99) || x.i - y.i);
   // 4단계 '목표 조정' 대안(채택한 것만): 목표 종류에 맞는 값을 바꿈. 3단계(대안 없음)에는 적용 안 됨
   const adjAge = (v) => { const mm = /^\s*(\d{4})/.exec(String(v)); return mm ? p.age + (+mm[1] - Math.floor(startIdx / 12)) : num(v); };
+  const adjAt = (v) => { const mm = /^\s*(\d{4})-(\d{1,2})\s*$/.exec(String(v)); return mm && +mm[2] >= 1 && +mm[2] <= 12 ? +mm[1] * 12 + +mm[2] - 1 : null; };
   for (const c of s.customAlts || []) {
     if (c.kind !== "목표 조정" || !c.gid || !num(sw.customOn?.[c.id])) continue;
-    if (String(c.gid).startsWith("n_")) { const g = p.goals.find((x) => x.gid === c.gid); if (g) { if (c.drop) { g.amount = 0; g.loanAmt = 0; g.asset = ""; g.dropped = true; } else { if (!blank(c.age)) g.age = adjAge(c.age); if (!blank(c.amount)) g.amount = num(c.amount); if (!blank(c.loanAmt)) { g.loanAmt = num(c.loanAmt); if (!blank(c.loanRate)) g.loanRate = num(c.loanRate) / 100; if (!blank(c.loanYears)) g.loanYears = num(c.loanYears); } } } continue; }
+    if (String(c.gid).startsWith("n_")) { const g = p.goals.find((x) => x.gid === c.gid); if (g) { if (c.drop) { g.amount = 0; g.loanAmt = 0; g.asset = ""; g.dropped = true; } else { if (!blank(c.age)) { g.age = adjAge(c.age); g.atIdx = adjAt(c.age); } if (!blank(c.amount)) g.amount = num(c.amount); if (!blank(c.loanAmt)) { g.loanAmt = num(c.loanAmt); if (!blank(c.loanRate)) g.loanRate = num(c.loanRate) / 100; if (!blank(c.loanYears)) g.loanYears = num(c.loanYears); } } } continue; }
     const gi = (s.goals || []).findIndex((x) => x.gid === c.gid), sg = (s.goals || [])[gi];
     if (!sg) continue;
     if (sg.ext) { // 다른 칸에서 계산되는 목표: 그 칸의 값을 4단계에서만 바꿈
@@ -2127,7 +2228,7 @@ function buildE(s, p, plan) {
     const g = (p.goals || []).find((x) => x.i === gi);
     if (!g) continue;
     if (c.drop) { g.amount = 0; g.loanAmt = 0; g.asset = ""; g.dropped = true; continue; }
-    if (!blank(c.age)) g.age = adjAge(c.age);
+    if (!blank(c.age)) { g.age = adjAge(c.age); g.atIdx = adjAt(c.age); }
     if (!blank(c.amount)) g.amount = num(c.amount);
     if (!blank(c.years) && !g.once) g.years = Math.max(1, Math.round(num(c.years)));
     if (!blank(c.growth)) g.growth = num(c.growth) / 100;
@@ -2139,7 +2240,7 @@ function buildE(s, p, plan) {
   const mk = (m, key, ageNow, retireAge) => {
     if (!m) return null;
     const bIdx = m.birth ? ymIdx(m.birth) : startIdx - Math.round(ageNow * 12) - 6;
-    const lifeExp = blank(m.lifeExp) ? null : num(m.lifeExp);
+    const lifeExp = blank(m.lifeExp) || num(m.lifeExp) <= ageNow ? null : num(m.lifeExp); // 현재 나이 이하 = 빈칸
     const biz = m.incType === "사업" ? num(m.bizIncome) : 0, yellow = m.incType === "사업" ? num(m.yellow) : 0;
     const gross = biz > 0 || blank(m.gross) ? 0 : num(m.gross), bonus = bonusMult(m, gross);
     const joinIdx = ymIdx(m.join);
@@ -2176,6 +2277,7 @@ function buildE(s, p, plan) {
     pp.npEarly = sw.early && key === whoKey(sw.earlyWho, "self") ? Math.min(5, Math.max(0, num(sw.earlyYears))) : 0; // 대안: 조기수령
     const inputMonthly = key === "self" ? p.penSelf : p.penSpouse;
     const inputStart = key === "self" ? p.penSelfAge : p.penSpouseAge;
+    if (bIdx + Math.round((inputStart || 65) * 12) + 1 <= startIdx) { pp.npDefer = 0; pp.npEarly = 0; } // 기준일에 이미 받는 중이면 연기·조기수령 없음(수령 중 연기는 공단 상담)
     pp.npGap = num(m.npGap); pp.npPaid = blank(m.npPaid) ? null : num(m.npPaid);
     const calc = npBasic(pp, { startY: Math.floor(startIdx / 12), startIdx, careOn: !!sw.care, careRatio: A("care_ratio") / 100 });
     const useCalc = !!calc; // 가입 시작 연월이 있으면 3·4단계 모두 산식으로 계산(입력한 수령액보다 우선)
@@ -2216,7 +2318,7 @@ function buildE(s, p, plan) {
   const h = s.house || {};
   return {
     startY, startM: (startIdx % 12) + 1, endIdx, sw, people,
-    lockedAmt: ymIdx(s.assets.lockedTo) > startIdx ? Math.min(num(s.assets.locked), num(s.assets.cash)) : 0, lockedIdx: ymIdx(s.assets.lockedTo),
+    lockedAmt: ymIdx(s.assets.lockedTo) > startIdx ? Math.min(num(s.assets.locked), num(s.assets.cash)) : 0, lockedIdx: ymIdx(s.assets.lockedTo), lockedMat: ymIdx(s.assets.lockedTo) > startIdx && !blank(s.assets.lockedMat) ? num(s.assets.lockedMat) : null,
     cashRate: A("cash_rate") / 100, debtRate: sw.credit && num(sw.creditRate) > 0 ? num(sw.creditRate) / 100 : A("cash_rate") / 100, hpIdx: ymIdx(sw.hpAt), uiIdx: ymIdx(sw.uiAt), prepayIdx: ymIdx(sw.prepayAt),
     carReg: num(s.expense?.carReg) || null,
     customs: (s.customAlts || []).filter((c) => c.kind !== "목표 조정" && c.kind !== "새 목표" && num(sw.customOn?.[c.id]) && !blank(c.amount)).map((c) => { const once = /일시/.test(c.kind || ""), f = ymIdx(c.from) ?? startIdx; return { name: c.name || "직접 추가 대안", inc: /수입|소득/.test(c.kind || ""), once, amount: num(c.amount), infl: c.infl !== false, fromIdx: f, toIdx: once ? f : ymIdx(c.to) ?? Infinity }; }), dcRate: A("dc_rate") / 100, psaRate: A("psa_rate") / 100,
@@ -2225,7 +2327,7 @@ function buildE(s, p, plan) {
     houseOwner: h.owner === "배우자" ? "spouse" : "self", houseBuyPrice: num(h.buyPrice), houseBuyY: h.buyDate ? +String(h.buyDate).slice(0, 4) : startY,
     bufferMonths: A("buffer_months"), survRate: A("survivor_rate") / 100, survDup: A("survivor_dup") / 100,
     careRatio: A("care_ratio") / 100, theta: A("hh_theta"), funeral: A("funeral_cash"),
-    childCount: Math.max(1, kids.length),
+    childCount: kids.length, // 자녀가 없으면 0(예전에는 1명으로 계산)
     mortgageOwner: "self",
     ...(() => {
       const items = (s.tax?.items || []).filter((it) => it.k && !blank(it.amount)).map((it) => ({ k: it.k, amount: num(it.amount), who: it.who === "배우자" ? "spouse" : "self", from: blank(it.from) ? -Infinity : num(it.from), to: blank(it.to) ? Infinity : num(it.to) }));
@@ -2260,6 +2362,7 @@ function simulate(p, extraMonthly = 0) {
 
 function analyze(p) {
   const rows = simulate(p);
+  if (!rows.length) throw new Error("계산할 기간이 없습니다. 나이·기대수명·기준일을 확인하세요");
   const minFin = Math.min(...rows.map((r) => r.fin));
   const depleted = rows.find((r) => r.fin < 0);
   // 고갈을 막는 데 필요한 은퇴 전 월 추가 저축(현재가치) — 이분 탐색
@@ -2276,17 +2379,22 @@ function analyze(p) {
     }
   }
   const first = rows[0];
-  const monthlyIncome = (p.incSelf + (p.spouseAge != null ? p.incSpouse : 0) + p.incOther);
+  const inow = incomeNow(p, rows), monthlyIncome = p.incSelf + (p.spouseAge != null ? p.incSpouse : 0) + p.incOther + inow.pension + inow.acct;
   const loanMonthly = p.loans.reduce((s, l) => s + loanNow(l.raw || { ...l, rate: l.rate * 100 }).pay, 0);
   const monthlySurplus = monthlyIncome - p.living - p.insurance - loanMonthly;
   const retireRow = rows.find((r) => r.age === p.retireAge) || rows[rows.length - 1];
   const retireRowPrev = rows.find((r) => r.age === p.retireAge - 1) || retireRow;
 
-  // 목표별 진단: 목표 기간 동안 금융자산이 버티는지, 생활비 1개월치가 남는지
-  const goals = p.goals.map((g) => {
+  const goals = goalStatus(p, rows);
+  return { rows, minFin, depleted, need, needCapped, monthlyIncome, monthlySurplus, loanMonthly, retireRow, retireRowPrev, goals, first };
+}
+// 목표별 진단: 목표 기간 동안 금융자산이 버티는지, 생활비 1개월치가 남는지(analyze·대안 비교 공통)
+function goalStatus(p, rows) {
+  return p.goals.map((g) => {
     const span = rows.filter((r) => r.age >= g.age && r.age < g.age + g.years);
     const gf = (r) => (g.growth != null ? Math.pow(1 + g.growth, Math.max(0, r.year - (rows[0]?.year ?? r.year))) : r.inf); // 목표별 상승률(비우면 물가)
     const fvTotal = span.reduce((s, r) => s + g.amount * gf(r), 0) || g.amount * Math.pow(1 + (g.growth ?? p.infl), Math.max(0, g.age - p.age)) * g.years;
+    const pvTotal = span.length ? span.reduce((s, r) => s + (g.amount * gf(r)) / r.inf, 0) : null;
     const low = span.length ? Math.min(...span.map((r) => r.fin)) : NaN;
     // 빠듯함: 목표는 낼 수 있지만 그해 연말 유동성이 그해 월평균 생활비 × tight_months(1개월)보다 적은 해가 있음
     const tightOf = (r) => (r.living / Math.max(1, r.months)) * A("tight_months");
@@ -2298,16 +2406,19 @@ function analyze(p) {
       else if (tight) { status = "warn"; label = "빠듯함"; }
       else { status = "good"; label = "충족"; }
     }
-    return { ...g, year: rows[0].year + (g.age - p.age), fvTotal, low, status, label, shortfall: low < 0 ? -low : 0 };
+    return { ...g, year: rows[0].year + (g.age - p.age), fvTotal, pvTotal, low, status, label, shortfall: low < 0 ? -low : 0 };
   });
-
-  return { rows, minFin, depleted, need, needCapped, monthlyIncome, monthlySurplus, loanMonthly, retireRow, retireRowPrev, goals, first };
 }
 
 // 규칙 기반 기본 점검 (AI 없이도 동작)
 function ruleChecks(p, a) {
   const out = requiredStatus(state).filter((r) => !r.done).map((r) => ({ priority: "필수", area: "필수 정보", item: r.label, why: "첫 상담에서 받아야 할 필수 정보입니다." }));
   const add = (priority, area, item, why) => out.push({ priority, area, item, why });
+  state.members.forEach((m, i) => {
+    if (!(i === 0 || (m.rel === "배우자" && !state.client.noSpouse)) || blank(m.lifeExp)) return;
+    const a = memberAge(m);
+    if (a !== "" && num(m.lifeExp) <= a) add("높음", "기본정보", `${i === 0 ? "본인" : "배우자"} 기대수명(${m.lifeExp}세)`, LIFE_WARN);
+  });
   const ef = p.cash / Math.max(1, p.living + p.insurance + a.loanMonthly);
   if (ef < A("buffer_months")) add("높음", "현금흐름", "비상예비자금 확보 계획", `예적금이 월 지출의 ${ef.toFixed(1)}개월분입니다. 최소 ${A("buffer_months")}개월분을 권합니다.`);
   const iv = (c) => String(state.info?.[c]?.v ?? "").trim();
@@ -2427,7 +2538,7 @@ function renderTaxItems() {
 // 3단계 바. 위험관리: "이 사람이 지금 사망하면" 엔진을 다시 돌려(보험 목록 제외) 유동성 최저가 얼마나 나빠지는지 = 필요 사망보장액
 function renderRisk(p, a) {
   const tb = $("#a31risk"); if (!tb) return;
-  const f = (v) => (v == null || Number.isNaN(v) ? "–" : fmt(v));
+  const f = fmtM;
   const minReal = (rows) => Math.min(...rows.map((r) => r.fin / r.inf));
   const base = minReal(a.rows), now = p.E.startY * 12 + p.E.startM - 1;
   const pols = state.policies || [];
@@ -2457,32 +2568,114 @@ function extTotals(p, a) {
       const t = sumItems(g.extItems || []); if (!t.nom) return null;
       const st = E.startY * 12 + E.startM - 1, its = (p.expItems || []).filter((it, j) => (g.extItems || []).includes(names[j]));
       const fr = Math.max(st, Math.min(...its.map((it) => it.fromIdx))), un = Math.min(E.endIdx, Math.max(...its.map((it) => it.untilIdx)));
-      return { nom: t.nom, pv: t.pv, when: Number.isFinite(fr) && Number.isFinite(un) ? `${ym(fr)}~${ym(un)}` : `${t.from}~${t.to}년` };
+      return { nom: t.nom, pv: t.pv, y0: t.from, y1: t.to, when: Number.isFinite(fr) && Number.isFinite(un) ? `${ym(fr)}~${ym(un)}` : `${t.from}~${t.to}년` };
     }
     if (g.extSrc === "은퇴 후 생활비") {
       const t = sumItems(g.extItems || []), ret = rows.filter((r) => r.retLiv > 0);
       const nom = ret.reduce((u, r) => u + r.retLiv, 0) + t.nom, pv = ret.reduce((u, r) => u + r.retLiv / r.inf, 0) + t.pv;
       const y0 = ret[0]?.year ?? 0, pen = rows.filter((r) => r.year >= y0), pnom = pen.reduce((u, r) => u + r.pension, 0), ppv = pen.reduce((u, r) => u + r.pension / r.inf, 0);
       const me = E.people.find((x) => x.key === "self");
-      return { nom, pv, when: me ? `${ym(me.retireIdx)}~${ym(Math.max(...E.people.map((x) => (x.deathIdx === Infinity ? E.endIdx : x.deathIdx))))}` : "", sub: [["└ 공적연금(부부 국민연금)", ppv, pnom], ["└ 공적연금 차감 후 부족(총은퇴일시금)", pv - ppv, nom - pnom]] };
+      // 교재 은퇴설계 절차: 총은퇴일시금(부족분 현재가치 × 은퇴 연도 물가) vs 은퇴자산(은퇴 연도 말 유동성 + 연금계좌) → 필요 연간 추가저축(예금 금리 연금 종가계수)
+      const retY = me ? Math.floor(me.retireIdx / 12) : null, rr = rows.find((r) => r.year === retY), nY = retY != null ? retY - E.startY : 0;
+      const fvf = nY > 0 ? (E.cashRate ? (Math.pow(1 + E.cashRate, nY) - 1) / E.cashRate : nY) : null;
+      const lump = rr ? (pv - ppv) * rr.inf : null, asset = rr ? rr.fin + rr.acctBal : null;
+      const retire = rr && nY > 0 ? { y: retY, lump, asset, needYr: fvf ? Math.max(0, lump - asset) / fvf : null } : null;
+      return { nom, pv, retire, y0: ret[0]?.year, y1: ret[ret.length - 1]?.year, when: me ? `${ym(me.retireIdx)}~${ym(Math.max(...E.people.map((x) => (x.deathIdx === Infinity ? E.endIdx : x.deathIdx))))}` : "", sub: [["└ 공적연금(부부 국민연금)", ppv, pnom], ["└ 공적연금 차감 후 부족(총은퇴일시금)", pv - ppv, nom - pnom]] };
     }
     if (g.extSrc === "근로시간 단축") {
       const gl = goalLinks(state), sw0 = state.sw || {}, sw = { careFrom: sw0.careFrom || gl.careFrom, careTo: sw0.careTo || gl.careTo, careWho: sw0.careWho || gl.careWho }; if (!sw.careFrom || !sw.careTo) return null;
       let rr; try { rr = runEngine(normalize(state, { care: 1, careFrom: sw.careFrom, careTo: sw.careTo, careWho: sw.careWho })); } catch (e) { return null; }
       const nom = rr.reduce((u, r) => u + (r.careLoss || 0), 0); if (!nom) return null;
-      return { nom, pv: null, when: `${ym(ymIdx(sw.careFrom))}~${ym(ymIdx(sw.careTo))}` };
+      return { nom, pv: null, y0: Math.floor(ymIdx(sw.careFrom) / 12), y1: Math.floor(ymIdx(sw.careTo) / 12), when: `${ym(ymIdx(sw.careFrom))}~${ym(ymIdx(sw.careTo))}` };
     }
     if (g.extSrc === "자녀 증여") {
       const gr = rows.filter((r) => r.gift > 0); if (!gr.length) return null;
-      return { nom: gr.reduce((u, r) => u + r.gift, 0), pv: gr.reduce((u, r) => u + r.gift / r.inf, 0), when: gr.map((r) => r.year).join("·") + "년" };
+      return { nom: gr.reduce((u, r) => u + r.gift, 0), pv: gr.reduce((u, r) => u + r.gift / r.inf, 0), y0: gr[0].year, y1: gr[gr.length - 1].year, when: gr.map((r) => r.year).join("·") + "년" };
     }
     return null;
   };
 }
 
+// 3-1·3-2 표의 금액(만 원): 1,000 미만은 소수 첫째 자리(정수면 그대로), 그 이상은 반올림 정수 — 보고서 표기와 같음
+const fmtM = (v) => {
+  if (v == null || !Number.isFinite(v)) return "–";
+  const a = Math.abs(v), s = v < 0 ? "−" : "";
+  const r = Math.round(a * 10) / 10;
+  if (r < 1000) return (r ? s : "") + (Number.isInteger(r) ? String(r) : r.toFixed(1));
+  return s + Math.round(a).toLocaleString("ko-KR");
+};
+// 달성률: 소수 첫째 자리. 목표 언저리(99~101%)는 넘었는지 모자란지 보이게 둘째 자리(보고서: 58.3% · 100.06%)
+const pctTxt = (r) => { const v = r * 100; return Math.abs(v - 100) < 1 && Math.abs(v - 100) > 1e-9 ? (Math.round(v * 100) / 100).toFixed(2) + "%" : (Math.round(v * 10) / 10).toFixed(1) + "%"; };
+// 재무비율 백분율: 100% 이상은 정수, 그 밖은 소수 첫째 자리(보고서 표기)
+const ratioPct = (v) => (v >= 1 ? Math.round(v * 100) : Math.round(v * 1000) / 10) + "%";
+// 기준일 다음 달 현금흐름표(월) — 3-1 현금흐름표·재무비율·저축여력 KPI·월 지출 칸이 함께 씀(보고서 3-1 나., 교재 2장)
+// 고정 = 구분 '고정'·'자동차세' 항목 + 보험료 + 대출 이자 + 재산세(월할), 변동 = 나머지 항목. 자동차세는 엔진과 같은 차령 경감
+function cashFlowNow(p) {
+  p = p || normalize(state, false);
+  const E = p.E, sIdx = E.startY * 12 + E.startM - 1, src = state.expense.items || [];
+  const age = E.carReg ? E.startY - E.carReg + 1 : 0, carX = E.carReg ? (age < 3 ? 0 : Math.min(0.05 * (age - 2), 0.5)) : 0;
+  const items = (p.expItems || []).map((it, j) => ({ it, kind: src[j]?.kind, name: src[j]?.name || "항목" }))
+    .filter((x) => sIdx >= x.it.fromIdx && sIdx <= x.it.untilIdx).map((x) => ({ ...x, amount: x.it.amount * (x.it.car ? 1 - carX : 1) }));
+  const B = balanceNow(), interest = B.interest, principal = Math.max(0, B.loanPay - interest);
+  const ptax = E.ownHome && p.realEstate ? propertyTax(p.realEstate * E.officialRatio, E.startY, E.oneHouse) / 12 : 0;
+  const isFixed = (x) => x.kind === "고정" || x.kind === "자동차세";
+  const fixed = items.filter(isFixed), vari = items.filter((x) => !isFixed(x));
+  const fixT = fixed.reduce((t, x) => t + x.amount, 0) + p.insurance + interest + ptax;
+  const varT = p.expItems ? vari.reduce((t, x) => t + x.amount, 0) : p.living;
+  const I = incomeNow(p), save = I.net - fixT - varT;
+  return { I, B, fixed, vari, fixT, varT, out: fixT + varT, save, principal, extra: save - principal, interest, ptax };
+}
+// 3-2 목표·니즈·우선순위 평가: 보고서처럼 순위별로 묶어 '필요한 것 → 현상 유지로 마련되는 것 → 차이 → 평가'
+// 마련되는 것: 은퇴 생활비 = 은퇴자산 vs 총은퇴일시금 · 근로시간 단축 = 월 저축여력 · 지출 항목 = 매년 지급 여부
+// · 그 밖 = 목표 기간 안에 만기가 오는 예금(세후), 없으면 시작 연도 말 유동성 · 상속 = 자녀 순수령
+function goalGroups(p, a, cf) {
+  const rows = a.rows, E = p.E, f = fmtM, ext = extTotals(p, a), yr = (y) => rows.find((r) => r.year === y);
+  const groups = new Map();
+  a.goals.forEach((g) => { const k = g.rank ?? "x" + g.i; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(g); });
+  const out = [];
+  for (const gs of groups.values()) {
+    const names = gs.map((g) => String(g.name).replace(/^\s*\d{1,2}\s*순위\s*/, ""));
+    let nom = 0, y0 = Infinity, y1 = -Infinity;
+    const xs = [];
+    for (const g of gs) {
+      if (g.ext && !g.amount) { const x = ext(g); xs.push([g, x]); if (x) { nom += x.nom || 0; if (x.y0 != null) { y0 = Math.min(y0, x.y0); y1 = Math.max(y1, x.y1 ?? x.y0); } } }
+      else { nom += g.fvTotal || 0; y0 = Math.min(y0, g.year); y1 = Math.max(y1, g.year + g.years - 1); }
+    }
+    const per = Number.isFinite(y0) ? (y0 === y1 ? `${y0}` : `${y0}~${y1}`) : "";
+    let status = gs.some((g) => g.status === "bad") ? "bad" : gs.some((g) => g.status === "warn") ? "warn" : gs.every((g) => g.status === "mid") ? "mid" : "good";
+    const title = esc(names.length > 2 ? `${names[0]} 외 ${names.length - 1}개` : names.join(" · "));
+    let need = `${title} <span class="muted">${nom ? `${f(nom)}(명목${per ? ", " + per : ""})` : ""}</span>`;
+    let have = "–", diff = "–", neg = false, note = "";
+    const ret = xs.find(([g, x]) => g.extSrc === "은퇴 후 생활비" && x?.retire)?.[1].retire;
+    const allExt = (s) => xs.length === gs.length && xs.every(([g]) => g.extSrc === s);
+    if (ret) {
+      need = `${title} <span class="muted">총은퇴일시금 ${f(ret.lump)}(${ret.y}년 가치)</span>`;
+      have = `은퇴자산 ${f(ret.asset)}(${ret.y}년 말, 공적연금 제외)`; diff = f(ret.asset - ret.lump); neg = ret.asset < ret.lump;
+      if (neg) { status = "bad"; note = `연 ${f(ret.needYr)}을 모아야 하나 추가저축여력은 연 ${f(cf.extra * 12)}`; }
+    } else if (allExt("근로시간 단축")) {
+      have = `저축여력 월 ${f(cf.save)}`; if (cf.save < 0) { diff = "재원 없음"; neg = true; status = "bad"; }
+    } else if (allExt("월 지출 항목")) {
+      const minus = gs.some((g) => g.low < 0); have = minus ? "매년 지급하지만 그해 유동성이 마이너스" : "매년 지급"; if (minus) { diff = "—"; note = "빚으로 지급"; }
+    } else {
+      const st = E.startY * 12 + E.startM - 1, dep = E.lockedAmt > 0 && E.lockedIdx != null && E.lockedIdx >= st ? { y: Math.floor(E.lockedIdx / 12), m: (E.lockedIdx % 12) + 1, v: E.lockedMat ?? E.lockedAmt * Math.pow(1 + E.cashRate, (E.lockedIdx - st) / 12) } : null;
+      if (dep && dep.y >= y0 && dep.y <= y1) { have = `만기 예금 세후 ${f(dep.v)}(${dep.y}.${dep.m})`; diff = f(dep.v - nom); neg = dep.v < nom; }
+      else { const r0 = yr(y0); if (r0) { have = `${y0}년 말 유동성 ${f(r0.fin)}(명목)`; if (r0.fin < 0) { diff = "재원 없음"; neg = true; } else { diff = f(r0.fin - nom); neg = r0.fin < nom; } } }
+      const firstNeg = rows.find((r) => r.year >= y0 && r.year <= y1 && r.fin < 0);
+      if (status === "bad" && firstNeg && !have.includes("유동성")) note = `${firstNeg.year}년 말부터 유동성 마이너스`;
+    }
+    const label = { bad: "미달", warn: "빠듯함", good: "충족", mid: "계획 기간 밖" }[status];
+    out.push({ rank: gs[0].rank ?? null, need, have, diff, neg, status, label, note });
+  }
+  if (p.legacy != null) {
+    const last = rows[rows.length - 1], ch = rows.inherit?.childNet, v = ch ?? last.netWorth / last.inf, ok = v >= p.legacy;
+    out.push({ rank: p.legacyRank ?? null, need: `상속 목표 <span class="muted">${ch != null ? "자녀 순수령" : "순자산"} ${f(p.legacy)}(현재가치, ${last.year})</span>`, have: f(v) + (ch == null ? "(상속세 차감 전 순자산)" : ""), diff: f(v - p.legacy), neg: !ok, status: ok ? "good" : "bad", label: `달성률 ${pctTxt(v / p.legacy)}`, note: "" });
+  }
+  return out.sort((x, y) => (x.rank ?? 99) - (y.rank ?? 99));
+}
+
 // ───────────────────── 3단계: 3-1 고객 관련 정보의 분석(보고서 구성) ─────────────────────
 function renderAna31(p, a) {
-  const E = p.E, f = (v) => (v == null || Number.isNaN(v) ? "–" : fmt(v)), pct = (x, t) => (t > 0 ? ` (${Math.round((x / t) * 100)}%)` : "");
+  const E = p.E, f = fmtM, pct = (x, t) => (t > 0 ? ` (${Math.round((x / t) * 100)}%)` : "");
   const ym = (idx) => `${Math.floor(idx / 12)}.${(idx % 12) + 1}`;
   const who = (k) => (k === "self" ? "본인" : "배우자");
   $("#anaAssume").textContent = `기준일 ${state.baseDate || "–"} · 물가 연 ${(p.infl * 100).toFixed(1)}% · 수익률 연 ${(p.rtn * 100).toFixed(1)}% · 예금 금리 연 ${(E.cashRate * 100).toFixed(2)}% · ` +
@@ -2491,17 +2684,29 @@ function renderAna31(p, a) {
   const ext = extTotals(p, a);
   const gl = a.goals.map((g) => {
     const name = `<td>${esc(g.name)}${g.src ? ` <span class="pill ${SRC_CLS[g.src] || "mid"}">${esc(g.src)}</span>` : ""}</td>`, when = `<td class="num">${g.year}년${g.years > 1 ? `~${g.year + g.years - 1}년` : ""}</td>`;
-    if (!(g.ext && !g.amount)) return { rank: g.rank ?? 99, html: `<tr>${name}${when}<td class="num">${f(g.amount) + (g.years > 1 ? "/년" : "")}</td><td class="num">${f(g.fvTotal)}</td></tr>` };
+    const y1g = g.year + g.years - 1;
+    if (!(g.ext && !g.amount)) return { rank: g.rank ?? 99, pv: g.pvTotal, nom: g.fvTotal, y0: g.year, y1: y1g, html: `<tr>${name}${when}<td class="num">${f(g.amount) + (g.years > 1 ? "/년" : "")}</td><td class="num">${f(g.fvTotal)}</td></tr>` };
     const x = ext(g);
-    if (!x) return { rank: g.rank ?? 99, html: `<tr>${name}${when}<td class="num">–</td><td class="num">–</td></tr>` };
+    if (!x) return { rank: g.rank ?? 99, pv: null, nom: null, html: `<tr>${name}${when}<td class="num">–</td><td class="num">–</td></tr>` };
     const nm = (t) => `<td class="alt-law">${esc(t)}</td>`;
     let html = `<tr>${name}${x.when ? `<td class="num">${esc(x.when)}</td>` : when}<td class="num">${x.pv == null ? "–" : f(x.pv)}</td><td class="num">${f(x.nom)}</td></tr>`;
     if (x.sub) html += x.sub.map((r) => `<tr class="sub-row">${nm(r[0])}<td></td><td class="num">${f(r[1])}</td><td class="num">${f(r[2])}</td></tr>`).join("");
-    return { rank: g.rank ?? 99, html };
+    if (x.retire) html += `<tr class="sub-row"><td class="alt-law" colspan="4">└ 총은퇴일시금 ${f(x.retire.lump)}(${x.retire.y}년 가치) vs 은퇴자산 ${f(x.retire.asset)}(${x.retire.y}년 말, 공적연금 제외)${x.retire.asset < x.retire.lump ? ` → ${f(x.retire.lump - x.retire.asset)} 부족` : ""}</td></tr>`;
+    return { rank: g.rank ?? 99, pv: x.pv, nom: x.nom, y0: x.y0 ?? g.year, y1: x.y1 ?? y1g, html };
   });
-  if (p.legacy != null) gl.push({ rank: p.legacyRank ?? 99, html: `<tr><td>${p.legacyRank ? p.legacyRank + "순위 " : ""}상속 목표(자녀 순수령, 현재가치)</td><td class="num">계획 끝</td><td class="num">${f(p.legacy)}</td><td class="num">${f(p.legacy * (a.rows[a.rows.length - 1]?.inf ?? 1))}</td></tr>` });
+  if (p.legacy != null) { const inf = a.rows[a.rows.length - 1]?.inf ?? 1; gl.push({ rank: p.legacyRank ?? 99, pv: p.legacy, nom: p.legacy * inf, html: `<tr><td>${p.legacyRank ? p.legacyRank + "순위 " : ""}상속 목표(자녀 순수령, 현재가치)</td><td class="num">계획 끝</td><td class="num">${f(p.legacy)}</td><td class="num">${f(p.legacy * inf)}</td></tr>` }); }
   gl.sort((x, y) => x.rank - y.rank);
-  $("#a31goals").innerHTML = gl.length ? `<thead><tr><th>목표</th><th>시점</th><th>필요자금(현재가치)</th><th>필요자금(명목)</th></tr></thead><tbody>${gl.map((r) => r.html).join("")}</tbody>` : `<tbody><tr><td class="muted">재무목표가 없습니다.</td></tr></tbody>`;
+  // 같은 순위가 여러 줄이면 순위 합계(보고서 3-1 가.: 1순위 6,002 · 2순위 19,376)
+  const body = [];
+  gl.forEach((r, i) => {
+    body.push(r.html);
+    const grp = gl.filter((x) => x.rank === r.rank && r.rank !== 99);
+    if (grp.length < 2 || gl[i + 1]?.rank === r.rank) return;
+    const sum = (k) => (grp.some((x) => x[k] == null) ? null : grp.reduce((t, x) => t + x[k], 0));
+    const y0 = Math.min(...grp.map((x) => x.y0 ?? Infinity)), y1 = Math.max(...grp.map((x) => x.y1 ?? -Infinity));
+    body.push(`<tr class="sum"><td>${r.rank}순위 합계</td><td class="num">${Number.isFinite(y0) ? (y0 === y1 ? `${y0}년` : `${y0}~${y1}년`) : ""}</td><td class="num">${f(sum("pv"))}</td><td class="num">${f(sum("nom"))}</td></tr>`);
+  });
+  $("#a31goals").innerHTML = gl.length ? `<thead><tr><th>목표</th><th>시점</th><th>필요자금(현재가치)</th><th>필요자금(명목)</th></tr></thead><tbody>${body.join("")}</tbody>` : `<tbody><tr><td class="muted">재무목표가 없습니다.</td></tr></tbody>`;
   const rt = p.rt, rb = state.retire || {}, src = (k) => (blank(rb[k]) ? "통계 추정(국민연금연구원 2024 적정생활비)" : "입력값");
   const me = E.people.find((x) => x.key === "self"), ra = p.retireAge;
   const phases = [
@@ -2514,37 +2719,18 @@ function renderAna31(p, a) {
   // 나. 개인재무제표: 재무상태표
   const as = state.assets || {}, cash = num(as.cash), locked = Math.min(num(as.locked), cash), inv = num(as.invest), oinv = num(as.otherInvest);
   const accts = p.accounts || [], others = (as.others || []).filter((o) => !blank(o.amount));
-  const bsA = [];
-  if (cash - locked) bsA.push(["예적금·현금", cash - locked]);
-  if (locked) bsA.push([`만기 전 예금${as.lockedTo ? `(${as.lockedTo} 만기)` : ""}`, locked]);
-  if (inv) bsA.push(["투자자산", inv]);
-  if (oinv) bsA.push(["기타 투자 금융자산(ISA 등)", oinv]);
-  accts.forEach((ac) => bsA.push([`${ac.owner} ${ac.type}${ac.type === "DB" ? " 퇴직급여(기준일 퇴직 가정)" : ""}`, num(ac.now)]));
-  if (p.realEstate) bsA.push([state.housing?.type === "자가" ? "거주 주택(시세)" : "부동산", p.realEstate]);
-  (state.props || []).filter((x) => num(x.value) > 0).forEach((x) => bsA.push([`${x.name || x.kind || "부동산"}(${x.kind || "주택"}, 시세)`, num(x.value)]));
-  if (["전세", "월세"].includes(state.housing?.type) && num(state.housing.deposit)) bsA.push([`임차보증금(${state.housing.type})`, num(state.housing.deposit)]);
-  if (num(as.use)) bsA.push(["사용자산(자동차 등)", num(as.use)]);
-  others.forEach((o) => bsA.push([`${o.kind || "기타자산"}${o.memo ? ` · ${o.memo}` : ""}`, num(o.amount)]));
-  const totA = bsA.reduce((t, x) => t + x[1], 0);
-  const bsL = p.loans.filter((l) => l.balance > 0).map((l) => [l.name, l.balance]);
-  if (num(state.liab?.card)) bsL.push(["카드 미결제", num(state.liab.card)]);
-  const totL = bsL.reduce((t, x) => t + x[1], 0);
+  const B = balanceNow(), bsA = B.assetsList, bsL = B.liabList, totA = B.totA, totL = B.totL;
   $("#a31date").textContent = `기준일 ${state.baseDate || ""}, 만 원`;
   $("#a31bs").innerHTML = `<thead><tr><th>재무상태표</th><th>금액</th></tr></thead><tbody>${bsA.map(([n, v]) => `<tr><td>${esc(n)}</td><td class="num">${f(v)}</td></tr>`).join("")}<tr class="sum"><td>자산 합계</td><td class="num">${f(totA)}</td></tr>${bsL.map(([n, v]) => `<tr><td>부채: ${esc(n)}</td><td class="num">${f(v)}</td></tr>`).join("")}<tr class="sum"><td>부채 합계</td><td class="num">${f(totL)}</td></tr><tr class="sum"><td><b>순자산</b></td><td class="num"><b>${f(totA - totL)}</b></td></tr></tbody>`;
-  // 나. 개인재무제표: 현금흐름표(월, 기준일 다음 달)
-  const sIdx = E.startY * 12 + E.startM - 1;
-  const items = (p.expItems || []).filter((it) => sIdx >= it.fromIdx && sIdx <= it.untilIdx);
-  const kindOf = (i) => (state.expense.items || [])[p.expItems.indexOf(i)]?.kind;
-  const nameOf = (i) => (state.expense.items || [])[p.expItems.indexOf(i)]?.name || "항목";
-  const interest = p.loans.reduce((t, l) => t + loanNow(l.raw).it, 0);
-  const pay = p.loans.reduce((t, l) => t + loanNow(l.raw).pay, 0), principal = Math.max(0, pay - interest); // 엔진과 같은 상환 방식별 첫 달
-  const ptax = E.ownHome && p.realEstate ? propertyTax(p.realEstate * E.officialRatio, E.startY, E.oneHouse) / 12 : 0;
-  const fixed = items.filter((i) => kindOf(i) === "고정"), vari = items.filter((i) => kindOf(i) !== "고정");
-  const fixT = fixed.reduce((t, i) => t + i.amount, 0) + p.insurance + interest + ptax;
-  const varT = p.expItems ? vari.reduce((t, i) => t + i.amount, 0) : p.living;
-  const inc = [["본인 세후 근로소득", p.incSelf], ...(p.incSpouse ? [["배우자 세후 근로소득", p.incSpouse]] : []), ...(p.incOther ? [["그 밖의 소득", p.incOther]] : [])];
-  const incT = inc.reduce((t, x) => t + x[1], 0), save = incT - fixT - varT;
-  const lst = (arr) => arr.map((i) => `${esc(nameOf(i))} ${f(i.amount)}`).join(" · ");
+  // 나. 개인재무제표: 현금흐름표(월, 기준일 다음 달) — 재무비율·저축여력 KPI와 같은 계산(cashFlowNow)
+  const CF = cashFlowNow(normalize(state, false));
+  const { fixed, vari, fixT, varT, interest, ptax, principal } = CF;
+  const I = CF.I, si31 = spouseIdx();
+  const incName = (m, who) => `${who} 세후 ${m?.incType === "사업" ? "사업소득" : "근로소득"}`;
+  const inc = [...(I.self ? [[incName(state.members[0], "본인"), I.self]] : []), ...(I.spouse ? [[incName(si31 >= 0 ? state.members[si31] : null, "배우자"), I.spouse]] : []),
+    ...(I.pension ? [["국민연금(수령 중)", I.pension]] : []), ...(I.acct ? [["연금계좌 수령", I.acct]] : []), ...(I.other ? [["그 밖의 소득", I.other]] : [])];
+  const save = CF.save;
+  const lst = (arr) => arr.map((x) => `${esc(x.name)} ${f(x.amount)}`).join(" · ");
   $("#a31cf").innerHTML = `<thead><tr><th>현금흐름표(월)</th><th>금액</th></tr></thead><tbody>${inc.map(([n, v]) => `<tr><td>${n}</td><td class="num">${f(v)}</td></tr>`).join("")}
     <tr><td>고정지출<div class="alt-law">${[lst(fixed), p.insurance ? `보험료 ${f(p.insurance)}` : "", interest ? `대출 이자 ${f(interest)}` : "", ptax ? `재산세(월 환산) ${f(ptax)}` : ""].filter(Boolean).join(" · ")}</div></td><td class="num">${f(fixT)}</td></tr>
     <tr><td>변동지출<div class="alt-law">${p.expItems ? lst(vari) : "생활비(총액)"}</div></td><td class="num">${f(varT)}</td></tr>
@@ -2553,13 +2739,14 @@ function renderAna31(p, a) {
     <tr class="sum"><td>추가저축여력</td><td class="num ${save - principal < 0 ? "neg" : ""}">${f(save - principal)}</td></tr></tbody>`;
   // 다·라·마
   const finAccts = accts.filter((ac) => ac.type !== "DB"), finT = cash + inv + oinv + finAccts.reduce((t, ac) => t + num(ac.now), 0);
-  const finParts = [["예적금·현금", cash], ["투자자산", inv + oinv], ...finAccts.map((ac) => [`${ac.owner} ${ac.type}`, num(ac.now)])].filter((x) => x[1] > 0);
+  const finParts = [["예적금·현금", cash - locked], [`만기 전 예금${as.lockedTo ? `(${as.lockedTo} 만기)` : ""}`, locked], ["투자자산", inv + oinv], ...finAccts.map((ac) => [`${ac.owner} ${ac.type}`, num(ac.now)])].filter((x) => x[1] > 0);
   const h = state.house || {}, defTax = accts.reduce((t, ac) => t + num(ac.deferredTax), 0);
+  const tc0 = a.rows[0]?.taxCalc, decTax = tc0 && Object.keys(tc0).length ? Object.values(tc0).reduce((t, x) => t + (x.settled || 0), 0) : null; // 기준 연도 결정세액(1년 치)
   const ptaxY = (y) => (E.ownHome && p.realEstate ? propertyTax(p.realEstate * E.officialRatio * Math.pow(1 + p.reg, y - E.startY), y, E.oneHouse) : 0);
   const rows3 = [
     ["다. 금융자산", `${f(finT)}(총자산 대비 ${totA > 0 ? Math.round((finT / totA) * 100) : 0}%) · ${finParts.map(([n, v]) => `${n} ${f(v)}${pct(v, finT)}`).join(" · ")}`],
     ["라. 부동산자산", p.realEstate ? `${state.housing?.type === "자가" ? "자가" : "부동산"} 시세 ${f(p.realEstate)}${pct(p.realEstate, totA).replace("(", "(총자산의 ")} · ${h.owner || "본인"} 명의${h.buyPrice ? ` · 취득가 ${f(num(h.buyPrice))}` : ""}${h.buyDate ? `(${h.buyDate})` : ""} · ${h.oneHouse !== false ? "1세대1주택" : "다주택"}` : "부동산 없음"],
-    ["마. 세무상황", [`근로소득세(다음 해, 원천징수 기준) ${f(a.rows[1]?.incTax)}`, E.ownHome && p.realEstate ? `재산세 ${E.startY}년 ${f(ptaxY(E.startY))} → ${E.startY + 1}년 ${f(ptaxY(E.startY + 1))}` : "", defTax ? `연금계좌 이연 퇴직소득세 ${f(defTax)}(연금으로 받으면 70%만 과세)` : ""].filter(Boolean).join(" · ")],
+    ["마. 세무상황", [decTax != null ? `${incTaxName()} ${E.startY}년 결정세액 ${f(decTax)}(연말정산 기준, 세액공제 반영 · 지방소득세 별도)` : `${incTaxName()}(다음 해${I.self || I.spouse ? ", 원천징수 기준" : ""}) ${f(a.rows[1]?.incTax)}`, E.ownHome && p.realEstate ? `재산세 ${E.startY}년 ${f(ptaxY(E.startY))} → ${E.startY + 1}년 ${f(ptaxY(E.startY + 1))}` : "", defTax ? `연금계좌 이연 퇴직소득세 ${f(defTax)}(연금으로 받으면 70%만 과세)` : ""].filter(Boolean).join(" · ")],
   ];
   $("#a31etc").innerHTML = `<thead><tr><th>구분</th><th>내용</th></tr></thead><tbody>${rows3.map(([n, v]) => `<tr><td>${n}</td><td>${v}</td></tr>`).join("")}</tbody>`;
   renderRisk(p, a);
@@ -2578,11 +2765,20 @@ $("#anaView").addEventListener("input", (e) => {
 $("#btnEvalAi").addEventListener("click", async () => {
   if (!current) { $("#evalStatus").textContent = "① 정보 수집 페이지에 본인 나이와 소득을 먼저 넣어 주세요."; return; }
   const btn = $("#btnEvalAi"), stt = $("#evalStatus");
+  if (!aiReady) { stt.textContent = aiOffMsg || "AI 연결을 확인하는 중입니다. 잠시 후 다시 눌러 주세요."; return; }
   const ev = state.eval3 || {};
-  if (["s", "w", "o", "t", "sum"].some((k) => String(ev[k] || "").trim()) && !confirm("이미 적은 종합 평가를 AI 초안으로 바꿀까요?")) return;
+  if (["s", "w", "o", "t", "sum"].some((k) => String(ev[k] || "").trim())) {
+    stt.innerHTML = `이미 적은 종합 평가를 AI 초안으로 바꿉니다. <button type="button" class="small" id="evalAiYes">바꾸기</button> <button type="button" class="small ghost" id="evalAiNo">취소</button>`;
+    $("#evalAiNo").onclick = () => { stt.textContent = ""; };
+    $("#evalAiYes").onclick = () => runEvalAi(btn, stt);
+    return;
+  }
+  runEvalAi(btn, stt);
+});
+async function runEvalAi(btn, stt) {
   btn.disabled = true; stt.innerHTML = `<span class="dot"></span> 작성 중입니다`;
   const prompt = `당신은 AFPK·CFP 자격을 갖춘 한국 재무설계사입니다. 아래 고객의 3단계(현상 유지, 대안 없음) 분석 결과로 AFPK 재무설계 보고서 3단계의 '종합 평가(강점·약점·기회·위협)'를 써 주세요.
-규칙: 숫자는 아래 자료에 있는 것만, 만 원 단위. 해결책(대안)은 쓰지 말고 기회는 '활용할 수 있는 제도·자원'으로만. 각 항목 1~2문장, 한국어.
+규칙: 법령 조문 번호나 금액은 아래 자료에 있는 것만 쓰고, 확실하지 않으면 '근거 확인 필요'라고 쓸 것. 특정 금융상품을 추천하지 말 것. 최종 판단은 설계사가 한다. 숫자는 아래 자료에 있는 것만, 만 원 단위. 해결책(대안)은 쓰지 말고 기회는 '활용할 수 있는 제도·자원'으로만. 각 항목 1~2문장, 한국어.
 JSON만 응답: {"s":"강점","w":"약점","o":"기회","t":"위협","sum":"종합 의견: 현상 유지 결과와 4단계의 핵심 과제 2문장"}
 
 ${buildContext()}`;
@@ -2592,7 +2788,7 @@ ${buildContext()}`;
     if (isExample) { isExample = false; $("#exampleTag").hidden = true; }
     persist(); renderEval(); stt.textContent = "AI 초안입니다. 상담사가 고쳐 쓰세요.";
   } catch (err) { stt.textContent = errText(err); } finally { btn.disabled = false; }
-});
+}
 
 // ───────────────────── 렌더: 입력 ─────────────────────
 const rankOpts = (v) => `<option value=""${blank(v) ? " selected" : ""}>순위 –</option>` + Array.from({ length: 10 }, (_, k) => `<option value="${k + 1}"${String(v) === String(k + 1) ? " selected" : ""}>${k + 1}순위</option>`).join("");
@@ -2616,6 +2812,7 @@ function renderForm() {
         <label class="mini">잔액(만)<input id="loan-${i}-bal" data-list="loans" data-idx="${i}" data-key="balance" type="number" value="${esc(l.balance)}"></label>
         <label class="mini">금리(%)<input id="loan-${i}-rate" data-list="loans" data-idx="${i}" data-key="rate" type="number" step="0.1" value="${esc(l.rate)}"></label>
         <label class="mini">남은 기간(년)<input id="loan-${i}-yrs" data-list="loans" data-idx="${i}" data-key="years" type="number" step="any" value="${esc(l.years)}"></label>
+        <label class="mini">분류<select class="goal-sel" id="loan-${i}-cat" data-list="loans" data-idx="${i}" data-key="cat"><option value=""${!l.cat ? " selected" : ""}>자동(${loanIsHouse({ ...l, cat: "" }) ? "거주주택 관련" : "그 밖"})</option><option value="주택"${l.cat === "주택" ? " selected" : ""}>거주주택 관련</option><option value="기타"${l.cat === "기타" ? " selected" : ""}>그 밖</option></select></label>
         <label class="mini">상환 방식<select class="goal-sel" id="loan-${i}-kind" data-list="loans" data-idx="${i}" data-key="kind">${LOAN_KINDS.map((k) => `<option${(l.kind || "원리금균등") === k ? " selected" : ""}>${k}</option>`).join("")}</select></label>
         ${l.kind === "거치 후 분할" ? `<label class="mini">남은 거치(년)<input id="loan-${i}-grace" data-list="loans" data-idx="${i}" data-key="grace" type="number" step="any" value="${esc(l.grace ?? "")}" placeholder="0"></label>` : ""}
         ${l.kind === "마이너스통장" ? `<small class="muted" style="grid-column:1/-1">마이너스통장: 쓴 금액(잔액)에 이자만 내고 원금은 그대로 둡니다. 갚을 계획은 재무목표나 4단계 중도상환으로 넣으세요.</small>` : ""}
@@ -2949,16 +3146,79 @@ function renderLoanPay() {
 }
 
 // 월 지출 합계 = 생활비(비면 추정) + 보험료 + 대출 원리금, 월 소득 대비 비율 = 보고서 재무비율 '가계수지상태'
+// ── 지금 시점 재무상태·월 소득: 1~2단계 재무상태표, 3-1 재무상태표·현금흐름표, 재무비율, KPI가 모두 이 값을 씀 ──
+// 대출 분류: 분류 칸(l.cat)이 있으면 그대로, 비어 있으면 전세대출·장기주택저당 공제·이름(주담대·주택담보·전세)으로 판단, 애매하면 '그 밖'
+const loanIsHouse = (l) => (l?.cat === "주택" ? true : l?.cat === "기타" ? false : !!(l?.lease || l?.deduct || /주담대|주택담보|전세/.test(l?.name || "")));
+// 은퇴 여부(기준일): 퇴직 연월이 기준일 이전이거나, 은퇴 나이가 기준일의 나이 이하
+function isRetired(m) {
+  if (!m) return false;
+  const bi = ymIdx(state.baseDate) ?? (new Date().getFullYear() * 12 + new Date().getMonth());
+  const ry = ymIdx(m.retireYM);
+  if (ry != null) return ry <= bi;
+  if (blank(m.retireAge)) return false;
+  const b = ymIdx(m.birth), age = b != null ? (bi - b) / 12 : memberAge(m);
+  return age !== "" && num(m.retireAge) <= age;
+}
+function balanceNow() {
+  const p = normalize(state, false);
+  const as = state.assets || {}, cash = num(as.cash), locked = Math.min(num(as.locked), cash), inv = num(as.invest), oinv = num(as.otherInvest);
+  const accts = p.accounts || [], others = (as.others || []).filter((o) => !blank(o.amount));
+  const A = [];
+  if (cash - locked) A.push(["예적금·현금", cash - locked]);
+  if (locked) A.push([`만기 전 예금${as.lockedTo ? `(${as.lockedTo} 만기)` : ""}`, locked]);
+  if (inv) A.push(["투자자산", inv]);
+  if (oinv) A.push(["기타 투자 금융자산(ISA 등)", oinv]);
+  accts.forEach((ac) => A.push([`${ac.owner} ${ac.type}${ac.type === "DB" ? " 퇴직급여(기준일 퇴직 가정)" : ""}`, num(ac.now)]));
+  if (p.realEstate) A.push([state.housing?.type === "자가" ? "거주 주택(시세)" : "부동산", p.realEstate]);
+  const props = (state.props || []).filter((x) => num(x.value) > 0);
+  props.forEach((x) => A.push([`${x.name || x.kind || "부동산"}(${x.kind || "주택"}, 시세)`, num(x.value)]));
+  const deposit = ["전세", "월세"].includes(state.housing?.type) ? num(state.housing.deposit) : 0;
+  if (deposit) A.push([`임차보증금(${state.housing.type})`, deposit]);
+  if (num(as.use)) A.push(["사용자산(자동차 등)", num(as.use)]);
+  others.forEach((o) => A.push([`${o.kind || "기타자산"}${o.memo ? ` · ${o.memo}` : ""}`, num(o.amount)]));
+  const L = p.loans.filter((l) => l.balance > 0).map((l) => [l.name, l.balance]);
+  if (num(state.liab?.card)) L.push(["카드 미결제", num(state.liab.card)]);
+  const totA = A.reduce((t, x) => t + x[1], 0), totL = L.reduce((t, x) => t + x[1], 0);
+  const loansAll = p.loans.reduce((t, l) => t + l.balance, 0), houseDebt = p.loans.filter((l) => loanIsHouse(l.raw || l)).reduce((t, l) => t + l.balance, 0);
+  const pays = state.loans.map((l) => ({ l, n: loanNow(l) }));
+  return { p, assetsList: A, liabList: L, totA, totL, net: totA - totL, cash, locked, fin: cash + inv + oinv, rtNow: accts.reduce((t, ac) => t + num(ac.now), 0),
+    realEstate: p.realEstate + props.reduce((t, x) => t + num(x.value), 0), deposit, use: num(as.use), othersT: others.reduce((t, o) => t + num(o.amount), 0),
+    loansAll, card: num(state.liab?.card), houseDebt,
+    loanPay: pays.reduce((t, x) => t + x.n.pay, 0), houseLoanPay: pays.filter((x) => loanIsHouse(x.l)).reduce((t, x) => t + x.n.pay, 0), interest: pays.reduce((t, x) => t + x.n.it, 0) };
+}
+// 월 소득(기준일 다음 달): 근로·사업(세후) + 지금 받는 국민연금 + 연금계좌 정기 수령 + 그 밖의 소득. gross = 세전 기준(재무비율 분모)
+function incomeNow(p, rows) {
+  p = p || normalize(state, false);
+  rows = rows || simulate(p);
+  const r = rows[0] || {}, mo = Math.max(1, r.months || 1);
+  const si = spouseIdx(), me = state.members[0], sp = si >= 0 ? state.members[si] : null;
+  const pension = (r.pension || 0) / mo;
+  const ageNow = (m) => { const b = ymIdx(m?.birth), bi = ymIdx(state.baseDate); return b != null && bi != null ? (bi - b) / 12 : memberAge(m); };
+  const payStarted = (m) => (m?.accounts || []).some((ac) => ac.payout === "연금" && !blank(ac.startAge) && num(ac.startAge) <= ageNow(m));
+  const acct = payStarted(me) || payStarted(sp) ? (r.lump || 0) / mo : 0;
+  const spOn = p.spouseAge != null;
+  const working = (m, inc) => inc > 0 && !isRetired(m);
+  const grossOf = (m, inc) => (!working(m, inc) ? 0 : m?.incType === "사업" && num(m.bizIncome) > 0 ? num(m.bizIncome) / 12 : num(m?.gross) / 12 || inc);
+  const net = p.incSelf + (spOn ? p.incSpouse : 0) + p.incOther + pension + acct;
+  const gross = grossOf(me, p.incSelf) + (spOn ? grossOf(sp, p.incSpouse) : 0) + pension + acct + p.incOther;
+  return { net, gross, pension, acct, other: p.incOther, self: p.incSelf, spouse: spOn ? p.incSpouse : 0 };
+}
+// 소득세 이름: 근로소득이 있으면 근로소득세, 사업소득이면 종합소득세, 연금만 받으면 연금소득세
+function incTaxName() {
+  const si = spouseIdx(), ps = [state.members[0], si >= 0 ? state.members[si] : null].filter(Boolean);
+  const on = (m) => num(m.income) > 0 && !isRetired(m);
+  const k = [];
+  if (ps.some((m) => on(m) && m.incType !== "사업")) k.push("근로소득세");
+  if (ps.some((m) => on(m) && m.incType === "사업")) k.push("종합소득세");
+  if (!k.length) k.push(incomeNow().pension > 0 ? "연금소득세" : "소득세");
+  return k.join("·");
+}
 function renderBalance() {
-  const a = state.assets, c = state.client;
-  const acc = (r) => (r?.accounts || []).reduce((t, x) => t + num(x.now), 0);
-  const fin = num(a.cash) + num(a.invest), rtNow = acc(c.selfRt) + (c.spouseRt && !c.noSpouse ? acc(c.spouseRt) : 0);
-  const assets = fin + rtNow + num(a.realEstate) + num(a.use);
-  const loans = state.loans.reduce((t, l) => t + num(l.balance), 0), card = num(state.liab?.card), debt = loans + card;
-  if (!assets && !debt) { $("#balanceSheet").innerHTML = ""; return; }
-  $("#balanceSheet").innerHTML = `<div><span>재무상태표(지금)</span> 순자산 <b>${fmt(assets - debt)}</b></div>
-    <div class="bs-row"><small>자산 ${fmt(assets)} = 금융 ${fmt(fin)} + 퇴직·연금계좌 ${fmt(rtNow)} + 부동산 ${fmt(num(a.realEstate))} + 사용자산 ${fmt(num(a.use))}</small></div>
-    <div class="bs-row"><small>부채 ${fmt(debt)} = 대출 ${fmt(loans)} + 카드 미결제 ${fmt(card)}</small></div>`;
+  const B = balanceNow();
+  if (!B.totA && !B.totL) { $("#balanceSheet").innerHTML = ""; return; }
+  $("#balanceSheet").innerHTML = `<div><span>재무상태표(지금)</span> 순자산 <b>${fmt(B.net)}</b></div>
+    <div class="bs-row"><small>자산 ${fmt(B.totA)} = 금융 ${fmt(B.fin)} + 퇴직·연금계좌 ${fmt(B.rtNow)} + 부동산 ${fmt(B.realEstate)} + 사용자산 ${fmt(B.use)}${B.deposit ? ` + 임차보증금 ${fmt(B.deposit)}` : ""}${B.othersT ? ` + 기타자산 ${fmt(B.othersT)}` : ""}</small></div>
+    <div class="bs-row"><small>부채 ${fmt(B.totL)} = 대출 ${fmt(B.loansAll)} + 카드 미결제 ${fmt(B.card)}</small></div>`;
 }
 
 function renderExpenseAll(p, loanPay) {
@@ -2967,11 +3227,12 @@ function renderExpenseAll(p, loanPay) {
   const liv = p.ready || !livEst ? p.living : 0;
   const total = liv + p.insurance + loanPay;
   if (!total) { box.innerHTML = ""; return; }
-  const inc = p.incSelf + (p.spouseAge != null ? p.incSpouse : 0) + p.incOther;
-  const ratio = inc > 0 ? total / inc : null;
+  let inc = p.incSelf + (p.spouseAge != null ? p.incSpouse : 0) + p.incOther, out = total, same = false;
+  try { if (p.ready) { const cf = cashFlowNow(normalize(state, false)); inc = cf.I.net; out = cf.out; same = true; } } catch (e) {}
+  const ratio = inc > 0 ? out / inc : null;
   const cls = ratio == null ? "" : ratio > 1 ? "bad" : ratio > 0.9 ? "warn" : "good";
   box.innerHTML = `<div><span>월 지출 합계</span> <b>${fmt(total)}</b> <small>= 생활비 ${fmt(liv)}${livEst ? "(추정)" : ""} + 보험료 ${fmt(p.insurance)} + 대출 원리금 ${fmt(loanPay)}</small></div>
-    ${ratio == null ? `<small class="muted">월 소득을 넣으면 소득 대비 비율이 나옵니다</small>` : `<div><span class="pill ${cls}">월 소득 대비 ${Math.round(ratio * 100)}%</span> <small class="muted">가계수지상태(지출 ÷ 소득) · 기준 100% 이하</small></div>`}`;
+    ${ratio == null ? `<small class="muted">월 소득을 넣으면 소득 대비 비율이 나옵니다</small>` : `<div><span class="pill ${cls}">${same ? "가계수지상태" : "월 소득 대비"} ${ratioPct(ratio)}</span> <small class="muted">${same ? `월 지출 ${fmtM(out)}(대출 이자·재산세 포함, 원금 제외) ÷ 세후 소득 ${fmtM(inc)} · 기준 100% 이하` : "지출 ÷ 소득 · 기준 100% 이하"}</small></div>`}`;
 }
 
 function scenarioSummary(p, rows) {
@@ -2991,16 +3252,29 @@ function renderScenario(pNow) {
   const p3 = normalize(state, false), r3 = simulate(p3), a = scenarioSummary(p3, r3);
   $("#scnTable").innerHTML = `<thead><tr><th>지표</th><th>3단계(현상 유지)</th></tr></thead><tbody>${scenarioRows(a).map((r) => `<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join("")}</tbody>`;
   // 재무비율(AFPK 포켓북)
-  const ex = state.expense, gross = num(state.members[0]?.gross) / 12 || p3.incSelf, liv = p3.living, loanM = state.loans.reduce((t, l) => t + loanNow(l).pay, 0);
-  const assets = num(state.assets.cash) + num(state.assets.invest) + num(state.assets.otherInvest) + (state.assets.others || []).reduce((t, o) => t + num(o.amount), 0) + num(state.assets.realEstate) + num(state.assets.use) + state.members.reduce((t, m) => t + (m.accounts || []).reduce((u, x) => u + num(x.now), 0), 0);
-  const mort = state.loans.reduce((t, l) => t + num(l.balance), 0), debt = mort + num(state.liab?.card);
-  const intM = state.loans.reduce((t, l) => t + loanNow(l).it, 0);
-  const outM = liv + p3.insurance + intM, inc = p3.incSelf + (p3.spouseAge != null ? p3.incSpouse : 0) + p3.incOther;
-  const ratios = [["가계수지상태(지출 ÷ 수입)", outM / inc, "100% 이하", (v) => v <= 1], ["비상예비자금(바로 쓸 수 있는 예금 ÷ 월 지출)", (num(state.assets.cash) - num(state.assets.locked)) / outM, "3~6개월", (v) => v >= 3, "개월"], ["거주주택 부채상환(상환액 ÷ 총소득)", loanM / gross, "20% 이하", (v) => v <= 0.2], ["거주주택 부채부담(주담대 ÷ 총자산)", mort / assets, "30% 이하", (v) => v <= 0.3], ["총부채부담(총부채 ÷ 총자산)", debt / assets, "40% 이하", (v) => v <= 0.4]];
-  $("#ratioBox").innerHTML = `<table><thead><tr><th>재무비율</th><th>고객</th><th>기준</th><th>판단</th></tr></thead><tbody>${ratios.map(([n, v, std, ok, unit]) => `<tr><td>${n}</td><td class="num">${Number.isFinite(v) ? (unit ? v.toFixed(2) + unit : Math.round(v * 1000) / 10 + "%") : "–"}</td><td>${std}</td><td><span class="pill ${Number.isFinite(v) && ok(v) ? "good" : "bad"}">${Number.isFinite(v) && ok(v) ? "충족" : "미달"}</span></td></tr>`).join("")}</tbody></table>`;
+  const CF = cashFlowNow(p3), B = CF.B, I = CF.I;
+  const outM = CF.out; // 현금흐름표 고정지출 + 변동지출(보고서 3-1: 재산세 포함, 대출 원금 제외)
+  // 비율 = [이름, 분자, 분모, 기준, 충족 판정, 단위, 분모가 0이고 분자가 있을 때의 판정 문구]
+  const ratios = [
+    ["가계수지상태(월 지출 ÷ 세후 수입)", outM, I.net, "100% 이하", (v) => v <= 1],
+    ["비상예비자금(바로 쓸 수 있는 예금 ÷ 월 지출)", B.cash - B.locked, outM, "3~6개월", (v) => v >= 3, "개월", "", B.locked > 0 && outM > 0 ? `만기 전 예금 포함 ${(B.cash / outM).toFixed(2)}개월` : ""],
+    ["거주주택 부채상환(거주주택 대출 상환액 ÷ 총소득, 세전)", B.houseLoanPay, I.gross, "20% 이하", (v) => v <= 0.2, "", "소득 없는 상환 부담"],
+    ["거주주택 부채부담(거주주택 대출 ÷ 총자산)", B.houseDebt, B.totA, "30% 이하", (v) => v <= 0.3, "", "자산 없이 부채만 있음"],
+    ["총부채부담(총부채 ÷ 총자산)", B.totL, B.totA, "40% 이하", (v) => v <= 0.4, "", "자산 없이 부채만 있음"],
+  ];
+  const cell = ([n, x, y, std, ok, unit, zeroBad, note]) => {
+    if (!(y > 0)) {
+      const bad = zeroBad && x > 0;
+      return `<tr><td>${n}</td><td class="num">–</td><td>${std}</td><td><span class="pill ${bad ? "bad" : "mid"}">${bad ? zeroBad : "해당 없음"}</span></td></tr>`;
+    }
+    if (n.startsWith("거주주택") && !(x > 0)) return `<tr><td>${n}</td><td class="num">–</td><td>${std}</td><td><span class="pill mid">해당 없음</span></td></tr>`;
+    const v = x / y, good = ok(v), over = /이하/.test(std);
+    return `<tr><td>${n}</td><td class="num">${unit ? v.toFixed(2) + unit : ratioPct(v)}</td><td>${std}</td><td><span class="pill ${good ? "good" : "bad"}">${good ? "충족" : over ? "초과" : "미달"}</span>${note ? `<div class="alt-law">${esc(note)}</div>` : ""}</td></tr>`;
+  };
+  $("#ratioBox").innerHTML = `<table><thead><tr><th>재무비율</th><th>고객</th><th>기준</th><th>판단</th></tr></thead><tbody>${ratios.map(cell).join("")}</tbody></table>`;
 }
 
-function renderResults() {
+function renderResultsCore() {
   syncMembers();
   const loanPay = renderLoanPay();
   const p = normalize(state);
@@ -3020,34 +3294,25 @@ function renderResults() {
   current = { p, a };
   try { renderScenario(p); } catch (err) { console.warn(err); }
 
-  const sr = a.monthlyIncome > 0 ? a.monthlySurplus / a.monthlyIncome : 0;
+  const cfK = cashFlowNow(normalize(state, false)), sr = cfK.I.net > 0 ? cfK.save / cfK.I.net : 0;
   const retireReal = a.retireRowPrev.fin / a.retireRowPrev.inf;
+  const retiredNow = p.retireAge <= p.age; // 이미 은퇴: '은퇴 직전'·'은퇴 전까지 추가 저축'은 뜻이 없음
   const k = [
-    { k: "현재 월 저축여력", v: fmt(a.monthlySurplus), d: `저축률 ${Math.round(sr * 100)}% · 대출상환 월 ${fmt(a.loanMonthly)}`, c: a.monthlySurplus < 0 ? "bad" : sr < A("save_rate_min") / 100 ? "warn" : "" },
-    { k: `은퇴 직전(${p.retireAge - 1}세) 유동성`, v: fmt(a.retireRowPrev.fin), d: `현재가치 ${fmt(retireReal)} · 연금계좌 ${fmt(a.retireRowPrev.acctBal)}`, c: a.retireRowPrev.fin < 0 ? "bad" : "" },
+    { k: "현재 월 저축여력", v: fmtM(cfK.save) + "만", d: `추가저축여력(대출 원금 ${fmtM(cfK.principal)} 상환 후) ${fmtM(cfK.extra)}만 · 저축률 ${Math.round(sr * 100)}% · 3-1 현금흐름표와 같음`, c: cfK.save < 0 ? "bad" : sr < A("save_rate_min") / 100 ? "warn" : "" },
+    retiredNow ? { k: "올해 말 유동성(이미 은퇴)", v: fmt(a.first.fin), d: `현재가치 ${fmt(a.first.fin / a.first.inf)} · 연금계좌 ${fmt(a.first.acctBal)}`, c: a.first.fin < 0 ? "bad" : "" }
+      : { k: `은퇴 직전(${p.retireAge - 1}세) 유동성`, v: fmt(a.retireRowPrev.fin), d: `현재가치 ${fmt(retireReal)} · 연금계좌 ${fmt(a.retireRowPrev.acctBal)}`, c: a.retireRowPrev.fin < 0 ? "bad" : "" },
     { k: "유동성 첫 마이너스", v: a.depleted ? `${a.depleted.year}년` : "없음", d: a.depleted ? `${a.depleted.age}세 · 최저 ${fmt(a.minFin)}` : `${p.lifeExp}세까지 유지 · 최저 ${fmt(a.minFin)}`, c: a.depleted ? "bad" : "good" },
-    { k: "필요 추가 저축", v: a.needCapped ? "3,000만+" : a.need ? `월 ${fmt(a.need)}` : "0", d: a.minFin < 0 ? "은퇴 전까지 현재가치 기준" : "현재 계획으로 충분", c: a.minFin < 0 ? "warn" : "good" },
+    retiredNow ? { k: "필요 추가 저축", v: "해당 없음(이미 은퇴)", d: "4단계에서 지출 조정·자산 활용 대안 검토", c: "" }
+      : { k: "필요 추가 저축", v: a.needCapped ? "3,000만+" : a.need ? `월 ${fmt(a.need)}` : "0", d: a.minFin < 0 ? "은퇴 전까지 현재가치 기준" : "현재 계획으로 충분", c: a.minFin < 0 ? "warn" : "good" },
   ];
   $("#kpis").innerHTML = k.map((x) => `<div class="kpi ${x.c}"><span class="k">${esc(x.k)}</span><span class="v">${esc(x.v)}</span><span class="d">${esc(x.d)}</span></div>`).join("");
 
-  // 목표 표
-  const gs = a.goals.slice();
-  const sortByRank = () => gs.sort((x, y) => (x.rank ?? 99) - (y.rank ?? 99)); // 상속 목표도 순위대로
-  if (p.legacy != null) {
-    const last = a.rows[a.rows.length - 1], inh = a.rows.inherit || {}, realNW = inh.childNet ?? last.netWorth / last.inf, ok = realNW >= p.legacy;
-    gs.push({ name: (p.legacyRank ? `${p.legacyRank}순위 ` : "") + (inh.childNet != null ? "상속 목표 (자녀 순수령, 세후)" : "상속 목표 (상속세 차감 전 순자산)"), year: last.year, age: last.age, years: 1, amount: p.legacy, fvTotal: p.legacy * last.inf, low: realNW, status: ok ? "good" : "bad", label: `${ok ? "충족" : "부족"} ${Math.round((realNW / p.legacy) * 100)}%`, legacy: true, src: goalSrc(state.legacy), rank: p.legacyRank });
-  }
-  sortByRank();
-  $("#goalNote").textContent = gs.length ? `${gs.filter((g) => g.status === "good").length}/${gs.length}개 충족` : "";
-  $("#goalTable").innerHTML = gs.length ? `
-    <thead><tr><th>목표(필요한 것)</th><th>시점</th><th>필요액(현재가치)</th><th>필요액 합계(명목)</th><th>현상 유지: 기간 중 최저 유동성</th><th>평가</th></tr></thead>
-    <tbody>${gs.map((g) => `<tr>
-      <td>${esc(g.name)}${g.src ? ` <span class="pill ${SRC_CLS[g.src] || "mid"}">${esc(g.src)}</span>` : ""}${g.ext ? ` <small class="muted">· 금액은 다른 칸에서 계산</small>` : ""}</td>
-      <td class="num">${g.year}년 · ${g.age}세${g.years > 1 ? ` ~${g.years}년` : ""}</td>
-      <td class="num">${g.ext && !g.amount ? "–" : fmt(g.amount) + (g.years > 1 ? "/년" : "")}</td>
-      <td class="num">${g.ext && !g.amount ? "–" : fmt(g.fvTotal)}</td>
-      <td class="num ${g.low < 0 ? "neg" : ""}">${Number.isFinite(g.low) ? fmt(g.low) + (g.legacy ? " (순수령·현재가치)" : "") : "–"}</td>
-      <td><span class="pill ${g.status}">${g.label}</span></td></tr>`).join("")}</tbody>` : `<tbody><tr><td class="muted">입력된 목표가 없습니다.</td></tr></tbody>`;
+  // 3-2 목표 표: 순위별(보고서 3-2 형식)
+  const G = goalGroups(p, a, cfK);
+  $("#goalNote").textContent = G.length ? `${G.filter((g) => g.status === "good").length}/${G.length}개 목표 충족 · 금액 만 원` : "";
+  $("#goalTable").innerHTML = G.length ? `
+    <thead><tr><th>순위</th><th>목표(필요한 것)</th><th>현상 유지로 마련되는 것</th><th>차이</th><th>평가</th></tr></thead>
+    <tbody>${G.map((g) => `<tr><td class="num">${g.rank ?? "–"}</td><td>${g.need}</td><td>${esc(g.have)}</td><td class="num ${g.neg ? "neg" : ""}">${esc(g.diff)}</td><td><span class="pill ${g.status}">${esc(g.label)}</span>${g.note ? `<div class="alt-law">${esc(g.note)}</div>` : ""}</td></tr>`).join("")}</tbody>` : `<tbody><tr><td class="muted">입력된 목표가 없습니다.</td></tr></tbody>`;
 
   renderChart(p, a);
   renderAna31(p, a); renderEval();
@@ -3288,27 +3553,56 @@ samplePromise.then((s) => {
 function aiOff() {
   const msg = ON_CLAUDE ? "AI 꺼짐 · claude.ai에 로그인한 상태로 이 페이지를 열어야 합니다" : "AI 꺼짐 · 서버에 AI 연결이 설정되지 않았습니다";
   $("#aiAvail").textContent = msg;
+  aiOffMsg = msg;
   $("#classifyStatus").textContent = msg + ". 아래 칸에 직접 넣으면 계산은 그대로 됩니다.";
-  ["#btnCheck", "#btnCf", "#btnSend", "#btnClassify", "#btnReg", "#btnAltSay"].forEach((id) => { const b = $(id); if (b) b.disabled = true; });
+  ["#btnCheck", "#btnCf", "#btnSend", "#btnClassify", "#btnReg", "#btnAltSay", "#btnEvalAi", "#btnAltAi"].forEach((id) => { const b = $(id); if (b) b.disabled = true; });
+  ["#evalStatus", "#altAiStatus", "#cfStatus", "#checkStatus", "#regStatus", "#altSayStatus"].forEach((id) => { const el = $(id); if (el) el.textContent = msg; });
 }
+let aiOffMsg = ""; // AI를 쓸 수 없는 환경이면 aiOff()가 채움(그 전에는 연결 확인 중)
 
 // 켜 둔 상담 지침을 질문 맨 앞에 붙임(대화형이면 첫 사용자 턴 앞)
 function withGuides(input) {
   const g = typeof guidePrefix === "function" ? guidePrefix() : "";
-  if (!g) return input;
-  if (typeof input === "string") return g + input;
-  return input.map((t, i) => (i === 0 ? { ...t, content: g + t.content } : t));
+  const add = !g ? input : typeof input === "string" ? g + input : input.map((t, i) => (i === 0 ? { ...t, content: g + t.content } : t));
+  return typeof add === "string" ? aiMask(add) : add.map((t) => ({ ...t, content: aiMask(String(t.content)) }));
 }
+// AI로 보내기 전 개인정보 가리기: 고객·가구원 이름 → 관계, 생년월일 → 만 나이, 주민등록번호·전화번호 꼴 → (생략)
+// 자유서술에 새로 적힌 개인정보까지 모두 찾지는 못하므로, 입력 칸 아래 안내로 사용자가 직접 확인하게 함
+const GENERIC_NAMES = /^(본인|배우자|남편|아내|자녀|아들|딸|첫째|둘째|셋째|막내|부모|모친|부친|어머니|아버지|시어머니|시아버지|장모|장인|할머니|할아버지|형|누나|오빠|언니|동생)$/;
+function aiMask(t) {
+  let s = String(t ?? "");
+  const pairs = [];
+  (state.members || []).forEach((m) => {
+    const nm = String(m.name || "").trim(), base = nm.replace(/\(.*?\)/g, "").trim();
+    if (base.length >= 2 && !GENERIC_NAMES.test(base)) pairs.push([base, `[${m.rel}]`]);
+    const b = /^(\d{4})-(\d{2})-(\d{2})/.exec(m.birth || "");
+    if (b) {
+      const [Y, MM, DD] = [b[1], b[2], b[3]], M = String(+MM), D = String(+DD), age = memberAge(m), rep = `(생년월일 생략·만 ${age}세)`;
+      [`${Y}-${MM}-${DD}`, `${Y}.${MM}.${DD}`, `${Y}.${M}.${D}`, `${Y}. ${M}. ${D}`, `${Y}/${MM}/${DD}`, `${Y}년 ${M}월 ${D}일`, `${Y}${MM}${DD}`].forEach((x) => pairs.push([x, rep]));
+    }
+  });
+  const cn = String(state.client?.name || "").trim();
+  if (cn.length >= 2 && !GENERIC_NAMES.test(cn)) pairs.push([cn, "[고객]"]);
+  pairs.sort((a, b) => b[0].length - a[0].length).forEach(([a, b]) => { s = s.split(a).join(b); });
+  return s.replace(/\b\d{6}-?[1-4]\d{6}\b/g, "(주민등록번호 생략)").replace(/\b01[016789]-?\d{3,4}-?\d{4}\b/g, "(전화번호 생략)");
+}
+let clientVer = 0; // 고객을 바꾸면 올림 — 그 전에 보낸 AI 요청의 늦은 응답은 화면에 넣지 않음
+const verOpts = (opts, v) => (opts.onText ? { ...opts, onText: (x) => { if (v === clientVer) opts.onText(x); } } : opts);
 async function askAI(input, opts = {}) {
   if (!aiReady) throw { code: "not_granted" };
-  return aiReady(withGuides(input), opts);
+  const v = clientVer, r = await aiReady(withGuides(input), verOpts(opts, v));
+  if (v !== clientVer) throw { code: "stale" };
+  return r;
 }
 async function askAIJson(input, opts = {}) {
   if (!aiReady) throw { code: "not_granted" };
-  return aiReady.json(withGuides(input), opts);
+  const v = clientVer, r = await aiReady.json(withGuides(input), verOpts(opts, v));
+  if (v !== clientVer) throw { code: "stale" };
+  return r;
 }
 function errText(e) {
   const c = e && e.code;
+  if (aiOffMsg && !aiReady) return aiOffMsg;
   if (c === "not_granted" || c === "sampling_disabled") return "이 페이지에서 Claude 사용이 허용되지 않았습니다.";
   if (c === "rate_limited") return "요청이 많습니다. 잠시 후 다시 시도하세요.";
   if (c === "invalid_json") return "응답 형식을 읽지 못했습니다. 다시 시도하세요.";
@@ -3318,6 +3612,7 @@ function errText(e) {
   if (c === "refusal") return "AI가 이 요청에는 답하지 않았습니다. 표현을 바꿔 다시 시도하세요.";
   if (c === "network") return "서버에 연결하지 못했습니다. 인터넷 연결을 확인하고 다시 시도하세요.";
   if (c === "cancelled") return "중지했습니다.";
+  if (c === "stale") return "고객이 바뀌어 이전 요청의 응답은 버렸습니다.";
   return "AI 응답을 받지 못했습니다. 다시 시도하세요.";
 }
 
@@ -3343,6 +3638,8 @@ function buildContext() {
   const { p, a } = current;
   const profile = clone(state);
   delete profile.info;
+  if (profile.client) delete profile.client.name;
+  profile.members = (profile.members || []).map((m, i) => { const o = { ...m, age: memberAge(state.members[i]) }; delete o.name; delete o.birth; return o; });
   const estLines = p.est.map((e) => `- ${e.label}: 추정 ${e.shown} (${e.why})`);
   const ledgerFilled = [], ledgerMissing = [];
   for (const it of allItems()) {
@@ -3355,13 +3652,13 @@ function buildContext() {
   return `[고객 입력 정보 JSON, 금액 단위 만원, 소득·지출은 월 기준, 목표 금액은 현재가치]
 ${JSON.stringify(profile)}
 
-[시뮬레이션 방식] 연 단위, 명목 금액. 소득은 소득상승률, 생활비·목표·연금은 물가상승률로 증가. 은퇴 후 생활비는 단계별 금액(현재가치 월): 활동기 ${p.rt.active} → ${p.rt.retroFrom}세 회고기 ${p.rt.retro} → ${p.rt.careFrom}세 간병기 ${p.rt.care}, 혼자 남은 뒤 ${p.rt.single}; 은퇴 후에는 끝 나이를 정한 지출 항목만 따로 더함. 보험료는 은퇴 전까지 고정. 대출은 원리금균등. 남는 돈은 모두 금융자산에 쌓이고 수익률이 붙음(부족하면 음수 잔액).
+[시뮬레이션 방식] 기준일 다음 달부터 월 단위로 계산해 연도별로 묶음(명목 금액). 대출은 입력한 상환 방식(원리금균등·원금균등·만기일시·거치 후 분할·마이너스통장)을 따름. 근로소득세·건강보험·장기요양·고용보험·국민연금 보험료, 국민연금 산식(가입 시작 연월이 있으면 국민연금법 산식), 연금계좌 인출 규칙(연금수령한도·이연퇴직소득세), 재산세, 1·2차 상속(상속세·취득세·장례비)을 계산에 포함. 소득은 소득상승률, 생활비·목표·연금은 물가상승률로 증가. 은퇴 후 생활비는 단계별 금액(현재가치 월): 활동기 ${p.rt.active} → ${p.rt.retroFrom}세 회고기 ${p.rt.retro} → ${p.rt.careFrom}세 간병기 ${p.rt.care}, 혼자 남은 뒤 ${p.rt.single}; 은퇴 후에는 끝 나이를 정한 지출 항목만 따로 더함. 보험료는 은퇴 전까지 고정. 대출은 원리금균등. 남는 돈은 모두 금융자산에 쌓이고 수익률이 붙음(부족하면 음수 잔액).
 
 [핵심 결과]
 - 현재 월 저축여력 ${Math.round(a.monthlySurplus)}만원 (월 소득 ${Math.round(a.monthlyIncome)}, 대출상환 월 ${Math.round(a.loanMonthly)})
-- 은퇴 직전 금융자산 ${Math.round(a.retireRowPrev.fin)}만원 (현재가치 ${Math.round(a.retireRowPrev.fin / a.retireRowPrev.inf)})
+${p.retireAge <= p.age ? `- 이미 은퇴: 올해 말 금융자산 ${Math.round(a.first.fin)}만원 (현재가치 ${Math.round(a.first.fin / a.first.inf)})` : `- 은퇴 직전 금융자산 ${Math.round(a.retireRowPrev.fin)}만원 (현재가치 ${Math.round(a.retireRowPrev.fin / a.retireRowPrev.inf)})`}
 - 유동성(예금·투자) 첫 마이너스: ${a.depleted ? `${a.depleted.year}년(${a.depleted.age}세)` : "없음"} / 최저 ${Math.round(a.minFin)} (연금계좌는 받는 시점까지 따로 쌓임)
-- 고갈 방지에 필요한 은퇴 전 월 추가 저축(현재가치): ${a.needCapped ? "3000만원 초과" : a.need}
+- 고갈 방지에 필요한 은퇴 전 월 추가 저축(현재가치): ${p.retireAge <= p.age ? "해당 없음(이미 은퇴) — 4단계에서 지출 조정·자산 활용 대안 검토" : a.needCapped ? "3000만원 초과" : a.need}
 - 목표별: ${a.goals.map((g) => `${g.name}(${g.age}세, ${g.amount}만${g.years > 1 ? "/년×" + g.years + "년" : ""}) → ${g.label}, 기간 중 최저 잔액 ${Math.round(g.low)}`).join("; ") || "없음"}
 
 [연도별 요약]
@@ -3548,6 +3845,70 @@ async function copyText(text, btn, label) {
 }
 
 let timer = null;
+// ── 입력 기본 검증: 입력은 막지 않고 칸 옆에 빨간 안내. 오류가 있는 동안은 그 값으로 새 결과를 만들지 않음 ──
+const LIFE_WARN = "기대수명이 현재 나이보다 작습니다 — 기대여명(남은 햇수)을 넣은 것은 아닌지 확인하세요";
+const AGE_RANGE = { 본인: [15, 110], 배우자: [15, 110], 자녀: [0, 90], 부모: [20, 120] };
+function baseDateObj() { const d = state.baseDate ? new Date(state.baseDate) : new Date(); return isNaN(d) ? new Date() : d; }
+function inputIssues() {
+  const errs = [], warns = [], bd = baseDateObj();
+  (state.members || []).forEach((m, i) => {
+    if (isLocked(m)) return;
+    const bdt = m.birth ? new Date(m.birth) : null;
+    if (bdt && !isNaN(bdt) && bdt > bd) errs.push({ sel: `#m-${i}-birth`, msg: "생년월일이 기준일보다 뒤입니다" });
+    const a = memberAge(m), [lo, hi] = AGE_RANGE[m.rel] || [0, 120];
+    if (a !== "" && a != null && (a < lo || a > hi)) errs.push({ sel: m.birth ? `#m-${i}-birth` : `#m-${i}-age`, msg: `나이(${a}세)가 ${lo}~${hi}세 범위를 벗어납니다` });
+    if ((i === 0 || m.rel === "배우자") && !blank(m.lifeExp) && a !== "" && num(m.lifeExp) <= a) warns.push({ sel: `#m-${i}-lifeExp`, msg: LIFE_WARN });
+  });
+  document.querySelectorAll('#form input[type="number"]').forEach((inp) => {
+    if (inp.disabled || inp.value === "" || !moneyInfo(inp)) return;
+    if (Number(inp.value) < 0) errs.push({ el: inp, msg: "금액은 0 이상이어야 합니다" });
+  });
+  return { errs, warns };
+}
+function markInputIssues() {
+  document.querySelectorAll("#form .inp-err").forEach((x) => x.classList.remove("inp-err"));
+  document.querySelectorAll("#form .err-read").forEach((x) => x.remove());
+  const iss = inputIssues(), seen = new Set();
+  for (const it of [...iss.errs, ...iss.warns]) {
+    const el = it.el || $(it.sel);
+    if (!el || seen.has(el)) continue;
+    seen.add(el);
+    el.classList.add("inp-err");
+    const t = document.createElement("small"); t.className = "err-read amt-read"; t.textContent = it.msg;
+    (el.closest("label.mini, label.exp-cell") || el.parentElement).appendChild(t);
+  }
+  return iss;
+}
+const issueText = (errs) => `빨간 안내가 있는 칸 ${errs.length}곳 · ${[...new Set(errs.map((x) => x.msg))].join(" · ")}`;
+function calcErrCard(title, msg) {
+  return `<div class="kpi bad" style="grid-column:1/-1"><span class="k">${esc(title)}</span><span class="d">${esc(msg)}</span><span class="d"><button type="button" class="small" data-recover="example">예시 불러오기</button> <button type="button" class="small" data-recover="reset">새 고객</button> <a class="small-link" href="#info">← 정보 수정</a></span></div>`;
+}
+document.addEventListener("click", (e) => { const b = e.target.closest?.("[data-recover]"); if (b) $(b.dataset.recover === "example" ? "#btnExample" : "#btnReset").click(); });
+let resultsOk = false; // 한 번이라도 정상 결과를 그렸는지(오류 입력일 때 '이전 입력의 결과' 표시용)
+function renderResults() {
+  let iss = { errs: [], warns: [] };
+  try { iss = markInputIssues(); } catch (e) {}
+  const blk = $("#inputBlock");
+  if (iss.errs.length) {
+    if (resultsOk) { blk.hidden = false; blk.textContent = `입력값을 확인해 주세요(${issueText(iss.errs)}). 아래는 이전 입력의 결과입니다.`; }
+    else { blk.hidden = true; $("#kpis").innerHTML = calcErrCard("입력값을 확인해 주세요", issueText(iss.errs)); }
+    return;
+  }
+  blk.hidden = true;
+  try { renderResultsCore(); resultsOk = true; }
+  catch (e) { console.warn(e); resultsOk = false; $("#kpis").innerHTML = calcErrCard("입력값 때문에 계산하지 못했습니다", String(e?.message || e).slice(0, 160)); }
+}
+function renderAlt() {
+  if ($("#altView").hidden) return;
+  const iss = inputIssues();
+  if (iss.errs.length) { $("#altKpis").innerHTML = calcErrCard("입력값을 확인해 주세요", issueText(iss.errs)); return; }
+  try { renderAltCore(); }
+  catch (e) { console.warn(e); $("#altKpis").innerHTML = calcErrCard("입력값 때문에 대안을 계산하지 못했습니다", String(e?.message || e).slice(0, 160)); }
+}
+function renderAltResults() {
+  try { renderAltResultsCore(); }
+  catch (e) { console.warn(e); $("#altKpis").innerHTML = calcErrCard("입력값 때문에 대안을 계산하지 못했습니다", String(e?.message || e).slice(0, 160)); }
+}
 function persist() { try { localStorage.setItem(STORE_KEY, JSON.stringify({ state, isExample })); } catch (e) {} }
 function schedule() { clearTimeout(timer); timer = setTimeout(() => { renderResults(); persist(); }, 150); }
 // ── 금액 칸 도우미: 넣은 숫자(만 원)를 글로 보여 주고, 원 단위로 넣은 것 같으면 경고 ──
@@ -3667,12 +4028,80 @@ $("#form").addEventListener("click", (e) => {
   isExample = false;
   renderForm(); schedule();
 });
-$("#btnExample").addEventListener("click", () => { state = clone(EXAMPLE); isExample = true; renderForm(); renderResults(); persist(); });
-$("#btnReset").addEventListener("click", () => {
-  state = clone(BLANK);
-  state.assume = { inflation: A("infl"), incomeGrowth: A("inc_growth"), returnRate: A("rtn"), reGrowth: A("re_growth") };
-  isExample = false; renderForm(); renderResults(); persist();
+// 고객을 바꿀 때: 이전 고객의 결과·AI 응답·초안·캐시를 모두 비우고 입력 화면으로
+const AI_OUT_IDS = ["#cfOut", "#aiChecks", "#altAiOut", "#regAi", "#proposals", "#altSayOut", "#chatLog"];
+const AI_OUT_INIT = Object.fromEntries(AI_OUT_IDS.map((id) => [id, $(id)?.innerHTML ?? ""]));
+function resetViews() {
+  clientVer++;
+  try { cfCtl?.abort(); } catch (e) {}
+  try { regCtl?.abort(); } catch (e) {}
+  AI_OUT_IDS.forEach((id) => { const el = $(id); if (el) el.innerHTML = AI_OUT_INIT[id]; });
+  ["#evalStatus", "#altAiStatus", "#cfStatus", "#checkStatus", "#regStatus", "#altSayStatus"].forEach((id) => { const el = $(id); if (el) el.textContent = aiOffMsg || ""; });
+  ["#altKpis", "#altCum", "#altMarg", "#altCompare", "#altGoals", "#altYear", "#altChart"].forEach((id) => { const el = $(id); if (el) el.innerHTML = ""; });
+  turns.length = 0; proposals = []; altSayDraft = []; lastQuestions = []; aiCheckSig = null; altLast = null; resultsOk = false;
+}
+function switchClient(next, ex) {
+  resetViews();
+  state = next; isExample = ex;
+  $("#exampleTag").hidden = !ex;
+  renderForm(); renderResults(); persist();
+  if (location.hash && location.hash !== "#info") location.hash = "#info"; else route();
+}
+const BACKUP_KEY = "goal-planner-backup-v1";
+function renderUndo() { let has = false; try { has = !!localStorage.getItem(BACKUP_KEY); } catch (e) {} $("#btnUndoWipe").hidden = !has; }
+// 예시가 아닌 입력을 지우기 전에는 화면 안에서 확인(브라우저 확인창은 아티팩트 안에서 막힐 수 있어 쓰지 않음)
+function confirmSwitch(what, go) {
+  const bar = $("#switchBar");
+  if (isExample) { bar.hidden = true; go(); return; }
+  bar.hidden = false;
+  bar.innerHTML = `<span>${esc(what)}: 지금 입력한 고객 정보를 지웁니다. 지우기 직전 입력은 한 번 보관해 [방금 지운 입력 되돌리기]로 되살릴 수 있습니다.</span>
+    <button type="button" class="small" id="swYes">지우고 시작</button> <button type="button" class="small ghost" id="swNo">취소</button>`;
+  $("#swNo").onclick = () => { bar.hidden = true; };
+  $("#swYes").onclick = () => {
+    bar.hidden = true;
+    try { localStorage.setItem(BACKUP_KEY, JSON.stringify({ at: new Date().toISOString(), state })); } catch (e) {}
+    go(); renderUndo();
+  };
+}
+$("#btnExample").addEventListener("click", () => confirmSwitch("예시 불러오기", () => switchClient(clone(EXAMPLE), true)));
+$("#btnReset").addEventListener("click", () => confirmSwitch("새 고객", () => {
+  const next = clone(BLANK);
+  next.assume = { inflation: A("infl"), incomeGrowth: A("inc_growth"), returnRate: A("rtn"), reGrowth: A("re_growth") };
+  switchClient(next, false);
+}));
+$("#btnUndoWipe").addEventListener("click", () => {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(BACKUP_KEY) || "null"); } catch (e) {}
+  if (!saved?.state) { renderUndo(); return; }
+  try { localStorage.removeItem(BACKUP_KEY); } catch (e) {}
+  switchClient(migrateState(saved.state), false);
+  renderUndo();
 });
+// [입력값 붙여넣기]: 구조를 확인하고 호환 보정을 한 뒤에만 바꿈. 실패하면 이유를 보여 주고 지금 입력은 그대로
+function parseClient(txt) {
+  let o;
+  try { o = JSON.parse(txt); } catch (e) { throw "JSON 형식이 아닙니다. [입력값 JSON 복사]로 복사한 내용을 그대로 붙여 넣으세요."; }
+  if (o && o.state && !o.members) o = o.state; // 저장 형식({ state, isExample })도 받음
+  const need = ["members", "client", "income", "expense", "assets", "goals"];
+  const miss = need.filter((k) => !o || typeof o[k] !== "object" || o[k] == null);
+  if (miss.length) throw `필수 항목이 없습니다: ${miss.join(", ")}`;
+  if (!Array.isArray(o.members) || !o.members.length || o.members[0]?.rel !== "본인") throw "가구원 목록(members)의 첫 사람이 본인이어야 합니다.";
+  if (!Array.isArray(o.goals)) throw "재무목표(goals)는 목록이어야 합니다.";
+  const allowed = new Set([...Object.keys(EXAMPLE), ...Object.keys(BLANK), ...Object.keys(state)]);
+  const out = {};
+  for (const k of Object.keys(o)) if (allowed.has(k)) out[k] = o[k];
+  for (const k of Object.keys(BLANK)) if (out[k] === undefined) out[k] = clone(BLANK[k]);
+  try { return migrateState(out); } catch (e) { throw "입력값 형식을 읽지 못했습니다(" + (e?.message || e) + ")."; }
+}
+$("#btnPaste").addEventListener("click", () => { const b = $("#pasteBar"); b.hidden = !b.hidden; if (!b.hidden) { $("#pasteMsg").textContent = ""; $("#pasteIn").focus(); } });
+$("#pasteClose").addEventListener("click", () => { $("#pasteBar").hidden = true; });
+$("#pasteGo").addEventListener("click", () => {
+  let next;
+  try { next = parseClient($("#pasteIn").value.trim()); }
+  catch (e) { $("#pasteMsg").textContent = typeof e === "string" ? e : "불러오지 못했습니다."; return; }
+  confirmSwitch("입력값 붙여넣기", () => { $("#pasteBar").hidden = true; $("#pasteIn").value = ""; switchClient(next, false); });
+});
+renderUndo();
 $("#btnCopy").addEventListener("click", () => copyText(JSON.stringify(state, null, 2), $("#btnCopy"), "입력값 JSON 복사"));
 
 document.querySelectorAll(".tabs button[data-tab]").forEach((b) => b.addEventListener("click", () => {
@@ -3889,6 +4318,7 @@ $("#btnReg").addEventListener("click", async () => {
   const prompt = `당신은 AFPK·CFP 재무설계사의 상담 보조입니다. 아래 [규제지역 표]만 근거로, 이 고객의 거주 지역이 규제지역인지와 그 때문에 이 고객의 재무설계에서 달라지는 점을 정리하세요.
 
 규칙:
+- 법령 조문 번호나 금액은 아래 자료에 있는 것만 쓰고, 확실하지 않으면 '근거 확인 필요'라고 쓸 것. 특정 금융상품을 추천하지 말 것. 최종 판단은 설계사가 한다.
 - 판정은 표에 있는 지역 목록으로만 하고, 표 기준일(${REGS.updated}) 이후 바뀌었을 수 있다고 한 줄 덧붙일 것. 표에 없는 사실을 지어내지 말 것.
 - 지역 이름이 모호하면(예: 시만 있고 구가 없음) 무엇을 더 확인해야 하는지 말할 것.
 - 이 고객의 상황(거주 형태, 주택 가격, 대출, 가구원 나이, 은퇴·이사·다운사이징·자녀 독립 같은 목표)에 실제로 걸리는 규제만 고를 것: 주담대 LTV·한도·DSR, 갈아타기, 1주택 비과세 거주 요건, 다주택 양도세·취득세, 토지거래허가 실거주.
@@ -4138,14 +4568,14 @@ const ALTS = [
   { id: "scholar", cat: "지출", name: "국가장학금(등록금 일부 감면)", law: "한국장학재단 설립 등에 관한 법률", flag: "scholar", params: [P_("scholarPct", "등록금 감면 %", "num")], crit: "기준 6", when: (c) => c.edu || "교육비 목표가 없음" },
   { id: "ds", cat: "주택", name: "주택 다운사이징(매각 후 작은 집 매입, 차액은 생활 자금·연금저축)", law: "소득세법 §89(1세대1주택 비과세) · 지방세법 §11", flag: "ds", params: [P_("dsY", "연도", "num"), P_("dsM", "월", "num"), P_("dsNewPV", "새 집(현재가치)", "num")], crit: "기준 2·4", when: (c) => c.home || "자가 주택이 없음" },
   { id: "hp", cat: "주택", name: "주택연금(정액형, 받은 돈은 주택 담보 대출로 쌓임)", law: "한국주택금융공사법", flag: "hp", params: [P_("hpAt", "개시 연월(부부 중 1명 55세 이상)", "month"), P_("hpMonthly", "월 수령액(공사 조회)", "num"), P_("hpRate", "대출 금리 %", "num", "4")], crit: "기준 2·3", when: (c) => c.home || "자가 주택이 없음" },
-  { id: "care", cat: "근로", name: "가족돌봄 근로시간 단축(임금 비율은 추정 기준)", law: "남녀고용평등법 §22의3·§22의4", flag: "care", params: [WHO("careWho", "본인"), P_("careFrom", "시작", "month"), P_("careTo", "끝", "month")], crit: "기준 3·5", when: (c) => c.worker || "근로소득이 있는 가구원이 없음" },
-  { id: "leave", cat: "근로", name: "가족돌봄휴직(무급)", law: "남녀고용평등법 §22의2", flag: "leave", params: [WHO("leaveWho", "본인"), P_("leaveFrom", "시작", "month"), P_("leaveTo", "끝", "month")], crit: "기준 4", when: (c) => c.worker || "근로소득이 있는 가구원이 없음" },
-  { id: "ui", cat: "근로", name: "구직급여 수급(필요하면 수급기간 연장 신고)", law: "고용보험법 §40·§48", flag: "ui", params: [WHO("uiWho", "배우자"), P_("uiAt", "수급 시작", "month"), P_("uiMonths", "개월", "num"), P_("uiMonthly", "월 수급액", "num")], crit: "기준 6", when: (c) => c.worker || "근로소득이 있는 가구원이 없음" },
-  { id: "retDelay", cat: "근로", name: "은퇴 시기 연기(근로 기간 연장·재취업)", law: "고령자고용법 §19(정년 60세 이상)", flag: "retDelay", params: [WHO("retDelayWho", "본인"), P_("retDelayYears", "늦출 연수", "num", "예: 2")], crit: "", when: (c) => c.worker || "근로소득이 있는 가구원이 없음" },
+  { id: "care", cat: "근로", name: "가족돌봄 근로시간 단축(임금 비율은 추정 기준)", law: "남녀고용평등법 §22의3·§22의4", flag: "care", params: [WHO("careWho", "본인"), P_("careFrom", "시작", "month"), P_("careTo", "끝", "month")], crit: "기준 3·5", when: (c) => c.employee || "근로자(세전 연봉이 있고 사업소득자가 아닌 재직 중인 사람)가 없음" },
+  { id: "leave", cat: "근로", name: "가족돌봄휴직(무급)", law: "남녀고용평등법 §22의2", flag: "leave", params: [WHO("leaveWho", "본인"), P_("leaveFrom", "시작", "month"), P_("leaveTo", "끝", "month")], crit: "기준 4", when: (c) => c.employee || "근로자(세전 연봉이 있고 사업소득자가 아닌 재직 중인 사람)가 없음" },
+  { id: "ui", cat: "근로", name: "구직급여 수급(필요하면 수급기간 연장 신고)", law: "고용보험법 §40·§48", flag: "ui", params: [WHO("uiWho", "배우자"), P_("uiAt", "수급 시작", "month"), P_("uiMonths", "개월", "num"), P_("uiMonthly", "월 수급액", "num")], crit: "기준 6", when: (c) => c.uiElig || "근로자나 최근 1년 안에 퇴직한 근로자가 없음" },
+  { id: "retDelay", cat: "근로", name: "은퇴 시기 연기(근로 기간 연장·재취업)", law: "근로자: 고령자고용법 §19(정년 60세 이상) / 사업소득자: 사업 지속", flag: "retDelay", params: [WHO("retDelayWho", "본인"), P_("retDelayYears", "늦출 연수", "num", "예: 2")], crit: "", when: (c) => c.earner || "근로·사업소득이 있는 재직 중인 사람이 없음" },
   { id: "vol", cat: "공적연금", name: "국민연금 임의계속가입(60세 이후 계속 납부)", law: "국민연금법 §13", flag: "vol", params: [WHO("volWho", "본인"), P_("volBase", "기준소득월액(비우면 60세 직전 임금)", "num")], crit: "기준 5", when: (c) => c.np60 || "60세 전후로 국민연금 가입 중인 사람이 없음" },
   { id: "wvol", cat: "공적연금", name: "국민연금 임의가입(소득 없는 가구원, 60세까지)", law: "국민연금법 §10", flag: "wvol", params: [WHO("wvolWho", "배우자"), P_("wvolBase", "기준소득월액", "num", "비우면 공단 공지값(추정 기준)")], crit: "기준 5·6", when: (c) => c.npVoluntary || "60세 미만이면서 소득 없는 가구원이 없음" },
-  { id: "defer", cat: "공적연금", name: "국민연금 연기(1년마다 7.2% 가산, 최대 5년)", law: "국민연금법 §62", flag: "deferOn", params: [WHO("deferWho", "본인"), P_("defer", "연기 연수(0~5)", "num")], crit: "기준 5·6", when: (c) => c.npBefore || "국민연금을 아직 받기 전인 사람이 없음" },
-  { id: "early", cat: "공적연금", name: "국민연금 조기수령(1년마다 6% 감액, 최대 5년)", law: "국민연금법 §61", flag: "early", params: [WHO("earlyWho", "본인"), P_("earlyYears", "앞당길 연수(1~5)", "num")], crit: "", when: (c) => c.npBefore || "국민연금을 아직 받기 전인 사람이 없음" },
+  { id: "defer", cat: "공적연금", name: "국민연금 연기(1년마다 7.2% 가산, 최대 5년)", law: "국민연금법 §62", flag: "deferOn", params: [WHO("deferWho", "본인"), P_("defer", "연기 연수(0~5)", "num")], crit: "기준 5·6", when: (c) => (c.npBefore && c.npNotYet) || (c.npAnyone && !c.npNotYet ? NP_RECEIVING_MSG : "국민연금을 아직 받기 전인 사람이 없음") },
+  { id: "early", cat: "공적연금", name: "국민연금 조기수령(1년마다 6% 감액, 최대 5년)", law: "국민연금법 §61", flag: "early", params: [WHO("earlyWho", "본인"), P_("earlyYears", "앞당길 연수(1~5)", "num")], crit: "", when: (c) => (c.npBefore && c.npNotYet) || (c.npAnyone && !c.npNotYet ? "이미 연금을 받는 중" : "국민연금을 아직 받기 전인 사람이 없음") },
   { id: "dc", cat: "퇴직·개인연금", name: "퇴직연금 DB → DC 전환(임금피크 직전 평균임금으로 확정)", law: "근로자퇴직급여 보장법", flag: "dc", params: [WHO("dcWho", "본인"), P_("dcAt", "전환 연월", "month")], crit: "기준 5", when: (c) => c.db || "DB형 퇴직연금이 없음" },
   { id: "irp", cat: "퇴직·개인연금", name: "퇴직급여 IRP 이전 후 연금수령", law: "근퇴법 §19②(§17④ 준용) · 소득세법 §146②", flag: "irp", crit: "기준 5", when: (c) => c.retirePay || "퇴직연금(DB·DC)이 없음" },
   { id: "lv", cat: "퇴직·개인연금", name: "IRP 균등 수령(운용수익은 연 1,500만 원 이내)", law: "소득세법 §14③9 · §64의4", flag: "lv", params: [WHO("lvWho", "본인"), P_("lvFrom", "시작 연도", "num"), P_("lvTo", "끝 연도", "num")], crit: "기준 5·6", when: (c) => c.irpLike || "IRP나 퇴직연금이 없음" },
@@ -4159,6 +4589,19 @@ const ALTS = [
   { id: "mom", cat: "가족 지원", name: "부모 공적 지원 수급 확인(기초연금 등, 지원액은 지출 항목으로)", law: "기초연금법", auto: "계산 없음 · 지원액은 월 지출 항목", crit: "-", when: (c) => c.parent || "부모 가구원·부모 지원 지출이 없음" },
 ];
 // 고객 입력에서 대안 해당 조건 읽기
+// ── 사람별 대안 적격(기준일 기준) ──
+const ageAtBase = (m) => { const b = ymIdx(m?.birth), bi = ymIdx(state.baseDate) ?? (new Date().getFullYear() * 12 + new Date().getMonth()); return b != null ? (bi - b) / 12 : num(memberAge(m), NaN); };
+const isWorkerM = (m) => !!m && num(m.gross) > 0 && m.incType !== "사업" && !isRetired(m); // 근로자(세전 연봉이 있고 사업소득자가 아닌 재직 중인 사람)
+const isEarnerM = (m) => !!m && (num(m.gross) > 0 || num(m.income) > 0 || num(m.bizIncome) > 0) && !isRetired(m); // 근로·사업소득이 있는 재직 중인 사람
+const leftRecently = (m) => { if (!m || !(num(m.gross) > 0) || m.incType === "사업" || !isRetired(m)) return false; const ry = ymIdx(m.retireYM), bi = ymIdx(state.baseDate) ?? (new Date().getFullYear() * 12 + new Date().getMonth()); return ry != null && bi - ry <= 12; };
+const npReceiving = (m, k) => !!m && ageAtBase(m) >= num(state.pension?.[k]?.startAge, 65); // 기준일에 이미 국민연금을 받는 중
+const NP_RECEIVING_MSG = "이미 연금을 받는 중(수령 중 연기 신청은 공단 상담 필요)";
+const WHO_ELIG = {
+  careWho: isWorkerM, leaveWho: isWorkerM, uiWho: (m) => isWorkerM(m) || leftRecently(m), retDelayWho: isEarnerM,
+  deferWho: (m, k) => !npReceiving(m, k), earlyWho: (m, k) => !npReceiving(m, k),
+};
+function whoPeople() { const si = spouseIdx(), ms = state.members || []; return [{ label: "본인", k: "self", m: ms[0] }, ...(si >= 0 ? [{ label: "배우자", k: "spouse", m: ms[si] }] : [])]; }
+const whoOpts = (qk) => whoPeople().filter((x) => (WHO_ELIG[qk] || (() => true))(x.m, x.k)).map((x) => x.label);
 function altCtx() {
   const ms = state.members || [], si = spouseIdx(), me = ms[0] || {}, spm = si >= 0 ? ms[si] : null;
   const people = [me, spm].filter(Boolean);
@@ -4183,13 +4626,26 @@ function altCtx() {
     np60: people.some((m) => works(m) && ageOf(m) < 65),
     npVoluntary: people.some((m) => !works(m) && ageOf(m) < 60),
     npBefore: np(me, "self") || (spm ? np(spm, "spouse") : false),
+    employee: whoOpts("careWho").length > 0, uiElig: whoOpts("uiWho").length > 0, earner: whoOpts("retDelayWho").length > 0,
+    npNotYet: whoOpts("deferWho").length > 0, npAnyone: people.length > 0,
   };
+}
+// 대안마다 꼭 필요한 값(a|b = 둘 중 하나). 2단계 목표에서 기본값을 가져오는 값(careFrom·careTo·giftY 등)은 목표에 값이 있으면 채운 것으로 봄
+const ALT_REQ = { cut: ["cutPct"], credit: ["creditRate"], prepay: ["prepayAt", "prepayAmt"], ds: ["dsY", "dsM", "dsNewPV"], hp: ["hpAt", "hpMonthly"], retDelay: ["retDelayYears"], early: ["earlyYears"],
+  lv: ["lvFrom", "lvTo"], psa: ["psaCap|psaReg", "psaFrom", "psaTo"], dIns: ["dInsPrem", "dInsAmt"], tIns: ["tInsPrem", "tInsAmt"], care: ["careFrom", "careTo"], leave: ["leaveFrom", "leaveTo"],
+  ui: ["uiAt", "uiMonths", "uiMonthly"], dc: ["dcAt"], gift: ["giftY", "giftEach"], scholar: ["scholarPct"] };
+function missingReq(a, sw = state.sw || {}) {
+  if (!a) return [];
+  if (a.custom) { const c = a.custom; return /지출|소득|수입/.test(c.kind || "월 지출") && blank(c.amount) ? ["금액"] : []; }
+  const gl = goalLinks(state), has = (k) => !blank(sw[k]) || (gl[k] != null && !blank(gl[k]));
+  return (a.required || []).filter((k) => !k.split("|").some(has)).map((k) => k.split("|").map((x) => (a.params || []).find((q) => q.k === x)?.label || x).join(" 또는 "));
 }
 const altApplies = (a, c) => { const r = a.when ? a.when(c) : true; return r === true ? { ok: true } : { ok: false, why: String(r) }; };
 // 직접 추가한 대안(고객별). 구분: 월 지출·월 소득(기간 동안 매달), 일시 지출·일시 수입(한 번)
 const CUST_KINDS = ["월 지출", "월 소득", "일시 지출", "일시 수입", "목표 조정", "새 목표"];
 const adjName = (c) => { const g = (state.goals || []).find((x) => x.gid === c.gid); return `목표 조정: ${g ? String(g.name || "목표").replace(/^\s*\d{1,2}\s*순위\s*/, "") : "목표를 고르세요"}`; };
 const custAlts = () => (state.customAlts || []).map((c) => ({ id: "u_" + c.id, cat: c.kind === "목표 조정" ? "목표 조정" : c.kind === "새 목표" ? "새 목표" : "직접 추가", name: c.kind === "목표 조정" ? c.name || adjName(c) : c.kind === "새 목표" ? `새 목표: ${c.name || "이름을 넣으세요"}` : c.name || "직접 추가 대안", law: c.law || "-", flag: "custom", custom: c, crit: "-", when: () => true }));
+ALTS.forEach((a) => { if (ALT_REQ[a.id]) a.required = ALT_REQ[a.id]; });
 const allAlts = () => [...ALTS, ...custAlts()];
 const altById = (id) => allAlts().find((a) => a.id === id);
 const flagOn = (a, sw = state.sw || {}) => {
@@ -4255,13 +4711,23 @@ const critTexts = () => ALT_CRIT.map(([h, d], i) => [h, state.altCrit?.[i] ?? d.
 
 function altMetrics(sw) {
   const p = normalize(state, sw), rows = simulate(p), m = scenarioSummary(p, rows), out = { ...m, p, rows };
-  if (metricKey() === "goals") {
-    const g = analyze(p).goals, t = num(state.legacy?.target);
-    out.goalsMet = g.filter((x) => x.status === "good").length + (t && m.child != null && m.child >= t ? 1 : 0);
-    out.goalsAll = g.length + (t ? 1 : 0);
-  }
+  const g = goalStatus(p, rows), t = num(state.legacy?.target);
+  out.goalSt = g.map((x) => ({ i: x.i, status: x.status }));
+  if (t && m.child != null) out.goalSt.push({ i: "legacy", status: m.child >= t ? "good" : "bad" });
+  out.goalsMet = g.filter((x) => x.status === "good").length + (t && m.child != null && m.child >= t ? 1 : 0);
+  out.goalsAll = g.length + (t ? 1 : 0);
+  out.negYears = rows.filter((r) => r.fin < 0).length; // 기준 2: 연말 유동성이 마이너스인 해
+  out.belowBuffer = rows.filter((r) => r.fin < r.buffer - 0.5).length; // 기준 2: 연말 유동성이 그해 비상예비자금보다 적은 해(인출 규칙으로 딱 맞춘 해의 소수점 오차는 제외, 목표 판정과 같은 0.5만 원)
   return out;
 }
+// 기준 2 표시와 비교(같거나 더 좋은지)
+const crit2Txt = (m) => (!m.negYears && !m.belowBuffer ? "✓" : `마이너스 ${m.negYears}년 · 비상예비자금 미달 ${m.belowBuffer}년`);
+const ST_RANK = { good: 3, warn: 2, mid: 1, bad: 0 };
+const notWorse = (m, base) => m.negYears <= base.negYears && m.belowBuffer <= base.belowBuffer &&
+  (base.goalSt || []).every((b) => { const x = (m.goalSt || []).find((y) => y.i === b.i); return x && (ST_RANK[x.status] ?? 0) >= (ST_RANK[b.status] ?? 0); });
+// 이 대안 자체가 어떤 목표의 방식(예: 간병 목표 = 근로시간 단축)이면, 빼면 고객 목표를 바꾸는 셈
+const EXT_SRC_ALT = { "근로시간 단축": "care", "자녀 증여": "gift" };
+const goalOfAlt = (id) => (state.goals || []).find((g) => g.ext && EXT_SRC_ALT[g.extSrc] === id);
 let altTimer = null, altLast = null;
 function scheduleAlt() { clearTimeout(altTimer); altTimer = setTimeout(renderAlt, 200); }
 function renderCrit() {
@@ -4273,7 +4739,7 @@ function renderCrit() {
   const opts = [["", "선택 필요"], ...Object.entries(METRICS).map(([k, v]) => [k, v.label])];
   $("#metricSel").innerHTML = opts.map(([k, l]) => `<option value="${k}"${(state.altMetric || "") === k ? " selected" : ""}>${esc(l)}</option>`).join("");
 }
-function renderAlt() {
+function renderAltCore() {
   if ($("#altView").hidden) return;
   if (ensureGids()) persist();
   renderCrit();
@@ -4292,12 +4758,16 @@ function renderAlt() {
   const skip = ALL.filter((a) => !fit.includes(a));
   const pos = (a) => ALL.indexOf(a);
   const sorted = (list) => [...list].sort((x, y) => rankOf(x, gopts) - rankOf(y, gopts) || pos(x) - pos(y)); // 보고서 4-1 B표처럼 목표 순위 순
-  $("#altCount").textContent = `해당 ${fit.length}개 · 계산 반영 ${on.length}개${skip.length ? ` · 해당 없음 ${skip.length}개` : ""}`;
+  const noVal = on.filter((a) => missingReq(a).length);
+  $("#altCount").textContent = `해당 ${fit.length}개 · 계산 반영 ${on.length - noVal.length}개${noVal.length ? ` · 값 없음 ${noVal.length}개` : ""}${skip.length ? ` · 해당 없음 ${skip.length}개` : ""}`;
   const gl = goalLinks(state), LK = { careFrom: "목표", careTo: "목표", giftY: "목표" };
   const param = (q) => {
     if (q.k === "giftEach3" && gl.giftEach != null) return `<label>${esc(q.label)}<input type="number" value="${esc(gl.giftEach)}" disabled title="2단계 재무목표(자녀 증여)에서 입력"><small class="muted">2단계 목표에서 입력</small></label>`;
     if (LK[q.k] && gl[q.k] != null && blank(sw[q.k])) return `<label>${esc(q.label)}<input data-swk="${q.k}" type="${q.t === "month" ? "month" : "number"}" value="" placeholder="목표: ${esc(gl[q.k])}"${q.t === "num" ? ' step="any"' : ""}><small class="muted">비우면 2단계 목표 값(${esc(gl[q.k])})</small></label>`;
-    if (q.t === "who") { const v = sw[q.k] || q.ph; return `<label>${esc(q.label)}<select data-swk="${q.k}">${["본인", ...(hasSp || v === "배우자" ? ["배우자"] : [])].map((o) => `<option${o === v ? " selected" : ""}>${o}</option>`).join("")}</select></label>`; }
+    if (q.t === "who") {
+      const v = sw[q.k] || q.ph, ok = whoOpts(q.k), opts = ok.includes(v) ? ok : [...ok, v];
+      return `<label>${esc(q.label)}<select data-swk="${q.k}">${opts.map((o) => `<option value="${o}"${o === v ? " selected" : ""}>${o}${ok.includes(o) ? "" : " (해당 없음)"}</option>`).join("")}</select></label>`;
+    }
     return `<label>${esc(q.label)}<input data-swk="${q.k}" type="${q.t === "month" ? "month" : "number"}" value="${esc(sw[q.k] ?? "")}" placeholder="${esc(q.ph)}"${q.t === "num" ? ' step="any"' : ""}></label>`;
   };
   const custParams = (c) => {
@@ -4319,7 +4789,7 @@ function renderAlt() {
       <td class="alt-link">${linkSel(a)}</td>
       <td>${a.custom ? "" : esc(a.name)}${why ? `<div class="alt-why">해당 없음: ${esc(why)}</div>` : ""}${a.auto ? `<div class="alt-law">${esc(a.auto)}</div>` : ""}${params ? (a.custom ? params : `<div class="alt-params">${params}</div>`) : ""}</td>
       <td class="alt-law">${esc(a.law)}</td>
-      <td><select data-judge="${a.id}" aria-label="${esc(a.name)} 판단">${[...new Set([j, ...opts])].map((o) => `<option${o === j ? " selected" : ""}>${o}</option>`).join("")}</select>${a.flag ? `<div class="alt-law">${flagOn(a) ? "계산 반영" : "계산 미반영"}</div>` : ""}</td>
+      <td><select data-judge="${a.id}" aria-label="${esc(a.name)} 판단">${[...new Set([j, ...opts])].map((o) => `<option${o === j ? " selected" : ""}>${o}</option>`).join("")}</select>${a.flag ? (flagOn(a) && missingReq(a).length ? `<div class="req-warn">값을 넣어야 계산됩니다: ${esc(missingReq(a).join(", "))}</div>` : `<div class="alt-law">${flagOn(a) ? "계산 반영" : "계산 미반영"}</div>`) : ""}</td>
       <td><input class="alt-critno" data-critno="${a.id}" type="text" value="${esc(state.altCritNo?.[a.id] ?? a.crit ?? "")}" placeholder="기준 번호" aria-label="${esc(a.name)} 적용 기준"></td>
       <td><input class="alt-memo" data-memo="${a.id}" type="text" value="${esc(state.altMemo?.[a.id] ?? "")}" placeholder="판단 근거·효과"></td></tr>`;
   };
@@ -4333,7 +4803,7 @@ function renderAlt() {
   }
   renderAltResults();
 }
-function renderAltResults() {
+function renderAltResultsCore() {
   const base = normalize(state, false);
   if (!base.ready) {
     ["#altCum", "#altMarg", "#altCompare", "#altGoals", "#altYear", "#altChart"].forEach((id) => ($(id).innerHTML = ""));
@@ -4358,20 +4828,27 @@ function renderAltResults() {
   if (fin.child != null) kp.push({ k: `상속 순수령(실질)${mk === "child" ? " (비교 지표)" : ""}`, v: f(fin.child), d: d(fin.child, s3.child), c: "" });
   $("#altKpis").innerHTML = kp.map((x) => `<div class="kpi ${x.c}"><span class="k">${esc(x.k)}</span><span class="v">${esc(x.v)}</span><span class="d">${esc(x.d)}</span></div>`).join("");
   // C. 누적 효과
-  const head = (last) => `<thead><tr><th>${last ? "빼는 대안" : "단계"}</th><th>유동성 첫 마이너스</th><th>유동성 최저(실질)</th><th>끝 금융자산(실질)</th><th>상속 순수령(실질)</th>${M.cnt ? "<th>달성 목표</th>" : ""}<th>${last ? "최종안 대비" : "바로 앞 대비"}<br><small>${esc(M.short)}</small></th>${last ? "" : "<th>순서</th>"}</tr></thead>`;
-  const row = (name, m, cmp, mv) => { const v = cmp ? dv(m, cmp) : null; return `<tr><td>${esc(name)}</td><td class="num">${m.first}</td><td class="num ${m.min < 0 ? "neg" : ""}">${fmt(m.min)}</td><td class="num ${m.endFin < 0 ? "neg" : ""}">${fmt(m.endFin)}</td><td class="num">${f(m.child)}</td>${M.cnt ? `<td class="num">${fv(m)}</td>` : ""}<td class="num"><span class="${v != null && v < 0 ? "neg" : ""}">${dtxt(v)}</span></td>${mv === undefined ? "" : `<td class="mv">${mv}</td>`}</tr>`; };
+  const head = (last) => `<thead><tr><th>${last ? "빼는 대안" : "단계"}</th><th>유동성 첫 마이너스</th><th>유동성 최저(실질)</th><th>끝 금융자산(실질)</th><th>상속 순수령(실질)</th>${M.cnt ? "<th>달성 목표</th>" : ""}<th>기준 2: 유동성</th><th>${last ? "최종안 대비" : "바로 앞 대비"}<br><small>${esc(M.short)}</small></th>${last ? "" : "<th>순서</th>"}</tr></thead>`;
+  const row = (name, m, cmp, mv, note = "") => { const v = cmp ? dv(m, cmp) : null; return `<tr><td>${esc(name)}${note}</td><td class="num">${m.first}</td><td class="num ${m.min < 0 ? "neg" : ""}">${fmt(m.min)}</td><td class="num ${m.endFin < 0 ? "neg" : ""}">${fmt(m.endFin)}</td><td class="num">${f(m.child)}</td>${M.cnt ? `<td class="num">${fv(m)}</td>` : ""}<td class="crit2">${esc(crit2Txt(m))}</td><td class="num"><span class="${v != null && v < 0 ? "neg" : ""}">${dtxt(v)}</span></td>${mv === undefined ? "" : `<td class="mv">${mv}</td>`}</tr>`; };
   const circ = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳";
   const mvBtns = (id, i) => `<button type="button" class="mv-btn" data-mv="${id}" data-dir="-1"${i === 0 ? " disabled" : ""} aria-label="앞으로">▲</button><button type="button" class="mv-btn" data-mv="${id}" data-dir="1"${i === ids.length - 1 ? " disabled" : ""} aria-label="뒤로">▼</button>`;
   let acc = new Set(), prev = s3, body = row("3단계 현상 유지", s3, null, "");
-  ids.forEach((id, i) => { acc.add(id); const m = altMetrics(swWith(acc)); body += row(`${circ[i] || i + 1} + ${altById(id).name}`, m, prev, mvBtns(id, i)); prev = m; });
+  const nv = (id) => (missingReq(altById(id)).length ? " · 값 없음" : "");
+  ids.forEach((id, i) => { acc.add(id); const m = altMetrics(swWith(acc)); body += row(`${circ[i] || i + 1} + ${altById(id).name}${nv(id)}`, m, prev, mvBtns(id, i)); prev = m; });
   $("#altCum").innerHTML = ids.length ? head(false) + `<tbody>${body}</tbody>` : `<tbody><tr><td class="muted">채택한 대안이 없습니다. 위 대안 검토 표에서 판단을 '채택'으로 바꾸세요.</td></tr></tbody>`;
   $("#orderNote").innerHTML = (state.altOrder || []).length ? `설계사가 정한 순서 <button type="button" class="small ghost" data-orderreset>기본 순서로</button>` : `<span class="pill warn">임의 설정</span> 기본 순서는 연결 목표의 순위 순이고, 연결이 없으면 맨 뒤입니다. ▲▼로 순서를 정하세요`;
-  // D. 한계 효과
-  $("#altMarg").innerHTML = ids.length ? head(true) + `<tbody>${ids.map((id) => row(`${altById(id).name} 없음`, altMetrics(swWith(new Set(ids.filter((x) => x !== id)))), fin)).join("")}</tbody>` : "";
+  // D. 한계 효과 — 빼도 기준 2·목표 상태가 같거나 좋은데 비교 지표가 커지면 회색 안내(판단은 바꾸지 않음, 메모에 근거가 있으면 숨김)
+  const margRow = (id) => {
+    const m = altMetrics(swWith(new Set(ids.filter((x) => x !== id)))), v = dv(m, fin);
+    const hint = v != null && v > 0 && notWorse(m, fin) && blank(state.altMemo?.[id]) ? `<div class="alt-why">기준 5로는 빼는 쪽이 큼 — 채택 근거(기준 3·4·6)를 메모에 적으세요</div>` : "";
+    return row(`${altById(id).name} 없음${nv(id)}`, m, fin, undefined, hint);
+  };
+  $("#altMarg").innerHTML = ids.length ? head(true) + `<tbody>${ids.map((id) => margRow(id)).join("")}</tbody>` : "";
+  $("#comboOut").innerHTML = ""; $("#comboBox").hidden = ids.length < 1;
   // 3단계 vs 4단계
   $("#altCompare").innerHTML = `<thead><tr><th>지표</th><th>3단계(현상 유지)</th><th>4단계(대안 적용)</th></tr></thead><tbody>${scenarioRows(s3, fin).map((r) => `<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td class="num">${r[2]}</td></tr>`).join("")}</tbody>`;
   const a3 = analyze(s3.p), a4 = analyze(fin.p), g3 = a3.goals, g4 = a4.goals;
-  const legacy = (m) => { const t = num(state.legacy?.target); if (!t || m.child == null) return null; return { label: `${m.child >= t ? "충족" : "부족"} ${(Math.floor((m.child / t) * 1000) / 10).toFixed(1)}% (${Math.round(m.child).toLocaleString()} / 목표 ${Math.round(t).toLocaleString()}만)`, status: m.child >= t ? "good" : "bad" }; };
+  const legacy = (m) => { const t = num(state.legacy?.target); if (!t || m.child == null) return null; return { label: `${m.child >= t ? "충족" : "부족"} ${pctTxt(m.child / t)} (${Math.round(m.child).toLocaleString()} / 목표 ${Math.round(t).toLocaleString()}만)`, status: m.child >= t ? "good" : "bad" }; };
   const L3 = legacy(s3), L4 = legacy(fin), lr = blank(state.legacy?.rank) ? "" : `${num(state.legacy.rank)}순위 `;
   const grow = g3.map((g) => { const h = g4.find((x) => x.i === g.i); return { rank: g.rank ?? 99, html: `<tr><td>${esc(g.name)}${h?.dropped ? ` <small class="muted">· 4단계에서 뺌</small>` : ""}</td><td><span class="pill ${g.status}">${g.label}</span></td><td>${h?.dropped ? "–" : `<span class="pill ${h?.status || ""}">${h?.label ?? "–"}</span>`}</td></tr>` }; });
   g4.filter((h) => h.added4).forEach((h) => grow.push({ rank: h.rank ?? 99, html: `<tr><td>${esc(h.name)} <span class="pill mid">4단계에서 추가</span></td><td>–</td><td><span class="pill ${h.status}">${h.label}</span></td></tr>` }));
@@ -4382,6 +4859,33 @@ function renderAltResults() {
   renderYearTable(fin.p, a4, "#altYear");
   altLast = { s3, fin, ids };
 }
+// ── 조합 점검: 계산 반영된 채택 대안 중 1개 또는 2개를 뺀 n + n(n−1)/2개 조합. 기준 2·목표 상태가 최종안과 같거나 좋으면서 비교 지표가 큰 것을 큰 순서로 5개(참고용, 판단은 바꾸지 않음) ──
+let comboRun = 0;
+async function runCombo() {
+  if (!altLast) return;
+  const run = ++comboRun, stt = $("#comboStatus"), out = $("#comboOut"), btn = $("#btnCombo");
+  const ids = altLast.ids.filter((id) => !missingReq(altById(id)).length), fin = altMetrics(swWith(new Set(altLast.ids)));
+  if (mval(fin) == null) { stt.textContent = "A. 선택 기준에서 비교 지표를 먼저 고르세요."; return; }
+  const combos = [];
+  ids.forEach((a, i) => { combos.push([a]); ids.slice(i + 1).forEach((b) => combos.push([a, b])); });
+  const hits = [];
+  btn.disabled = true; out.innerHTML = "";
+  for (let k = 0; k < combos.length; k++) {
+    if (run !== comboRun) return;
+    const c = combos[k], m = altMetrics(swWith(new Set(altLast.ids.filter((x) => !c.includes(x)))));
+    if (notWorse(m, fin) && mval(m) > mval(fin)) hits.push({ c, m, d: mval(m) - mval(fin) });
+    if (k % 6 === 5) { stt.textContent = `계산 중 ${k + 1}/${combos.length}`; await new Promise((r) => setTimeout(r, 0)); }
+  }
+  btn.disabled = false;
+  hits.sort((x, y) => y.d - x.d);
+  const top = hits.slice(0, 5), M = metricInfo();
+  stt.textContent = `${combos.length}가지 조합을 계산했습니다.`;
+  if (!top.length) { out.innerHTML = `<p class="muted" style="margin:6px 0 0">숫자 기준(기준 2·5)만 보아도 최종안보다 큰 조합이 없습니다.</p>`; return; }
+  const goalNote = (c) => c.map(goalOfAlt).filter(Boolean).map((g) => `목표 변경 필요: ${blank(g.rank) ? "" : num(g.rank) + "순위 "}${g.name}의 방식이 이 대안입니다`);
+  out.innerHTML = `<p class="muted" style="margin:6px 0 4px">아래 조합은 숫자 기준(기준 2·5)만 보면 최종안보다 큽니다. 1~2개를 빼 본 탐색이며 전체 최적화가 아닙니다. 채택을 유지한다면 기준 1·3·4·6 근거를 메모에 적으세요.</p>
+    <div class="scroll-x"><table><thead><tr><th>뺀 대안</th><th>${esc(M.short)}</th><th>최종안 대비</th><th>기준 2: 유동성</th><th>비고</th></tr></thead><tbody>${top.map((h) => `<tr><td>${h.c.map((id) => esc(altById(id).name)).join(" + ")}</td><td class="num">${M.cnt ? h.m.goalsMet + "/" + h.m.goalsAll : fmt(mval(h.m))}</td><td class="num">+${M.cnt ? h.d + "개" : fmt(h.d)}</td><td class="crit2">${esc(crit2Txt(h.m))}</td><td class="alt-law">${esc(goalNote(h.c).join(" · "))}</td></tr>`).join("")}</tbody></table></div>`;
+}
+document.addEventListener("click", (e) => { if (e.target.id === "btnCombo") runCombo(); });
 // 4단계 '새 목표': 상담 중 새로 나온 목표. 채택하면 4단계에만 목표로 들어감(3단계는 고객이 처음 말한 목표 그대로)
 function newGoalParamsHTML(c, kindSel, f) {
   const once = (c.type || "once") === "once", sel = (k, opts, d) => `<select data-cust="${c.id}" data-ck="${k}">${opts.map(([v, t]) => `<option value="${v}"${(c[k] ?? d) === v ? " selected" : ""}>${t}</option>`).join("")}</select>`;
@@ -4425,6 +4929,7 @@ async function altSay() {
   const prompt = `당신은 AFPK 재무설계사의 4단계(대안 제시) 보조입니다. 상담사가 말로 적은 대안을, 아래 계산기가 계산할 수 있는 대안 초안으로 나누세요. 최종 판단(채택 여부)은 상담사가 합니다.
 
 규칙:
+- 법령 조문 번호나 금액은 아래 자료에 있는 것만 쓰고, 확실하지 않으면 '근거 확인 필요'라고 쓸 것. 특정 금융상품을 추천하지 말 것. 최종 판단은 설계사가 한다.
 - 숫자는 상담사가 말한 것만 쓰세요. 말에 없는 값(금리, 기간, 금액 등)은 만들지 말고 빈 문자열로 두고 missing에 적으세요.
 - 금액 단위는 만원(1억 = 10000, 2억 = 20000). 목표 금액은 현재가치 기준.
 - 목표를 바꾸는 말은 type "goalAdj"(gid는 아래 목표 목록에서). 목표 종류에 맞는 키만 쓰세요.
@@ -4611,7 +5116,7 @@ $("#btnAltAi").addEventListener("click", async () => {
   const ctxA = altCtx(), gopts = goalOpts(), M = metricInfo();
   const goalTxt = (a) => gopts.find((o) => o.v === linkOf(a))?.label || "연결 없음";
   const list = allAlts().filter((a) => altApplies(a, ctxA).ok || (a.flag && flagOn(a))).map((a, i) => `${i + 1}. [${a.cat}] ${a.name}${a.custom ? ` (직접 추가: ${a.custom.kind || "월 지출"} ${a.custom.amount ?? "–"}만, ${a.custom.from || "지금"}~${a.custom.to || ""})` : ""} — 근거: ${a.law} — 연결 목표: ${goalTxt(a)} — 현재 판단: ${judgeOf(a)}${a.flag ? (flagOn(a) ? " (계산 반영)" : " (계산 미반영)") : " (계산과 무관)"}`).join("\n");
-  const m = (x) => `첫 마이너스 ${x.first}, 유동성 최저(실질) ${fmt(x.min)}, 끝 금융자산(실질) ${fmt(x.endFin)}, 상속 순수령(실질) ${x.child == null ? "–" : fmt(x.child)}${x.goalsMet != null ? `, 달성 목표 ${x.goalsMet}/${x.goalsAll}` : ""}`;
+  const m = (x) => `기준 2(유동성) ${crit2Txt(x)}, 첫 마이너스 ${x.first}, 유동성 최저(실질) ${fmt(x.min)}, 끝 금융자산(실질) ${fmt(x.endFin)}, 상속 순수령(실질) ${x.child == null ? "–" : fmt(x.child)}${x.goalsMet != null ? `, 달성 목표 ${x.goalsMet}/${x.goalsAll}` : ""}`;
   const prompt = `당신은 AFPK·CFP 자격을 갖춘 한국 재무설계사입니다. 아래 고객의 3단계(현상 유지) 진단을 보고, 4단계에서 채택할 대안 조합을 제안해 주세요. 대안 검토 방식은 AFPK 재무설계 보고서 4-1(선택 기준 → 목표별 대안 → 누적 효과 → 한계 효과)을 따릅니다.
 
 재무목표(순위): ${gopts.map((o) => o.label).join(", ") || "없음"}
@@ -4626,6 +5131,14 @@ ${list}
 현재 계산 결과:
 - 3단계: ${m(altLast.s3)}
 - 현재 채택한 4단계: ${m(altLast.fin)}
+
+C표(누적 효과: 채택 대안을 순서대로 하나씩 더했을 때):
+${(() => { const acc = new Set(); return altLast.ids.map((id, i) => { acc.add(id); return `${i + 1}. + ${altById(id).name}: ${m(altMetrics(swWith(acc)))}`; }).join("\n") || "(채택한 대안 없음)"; })()}
+
+D표(한계 효과: 최종안에서 그 대안 하나만 뺐을 때):
+${altLast.ids.map((id) => `- ${altById(id).name} 없음: ${m(altMetrics(swWith(new Set(altLast.ids.filter((x) => x !== id)))))}`).join("\n") || "(없음)"}
+
+규칙: 법령 조문 번호나 금액은 아래 자료에 있는 것만 쓰고, 확실하지 않으면 '근거 확인 필요'라고 쓸 것. 특정 금융상품을 추천하지 말 것. 최종 판단은 설계사가 한다. 추천·변경 이유는 위 C표·D표의 숫자로 말할 것.
 
 형식(마크다운, 한국어, 1,600자 이내):
 ### 진단 요약
@@ -4745,10 +5258,13 @@ renderGuideCount();
 fetch("assumptions.json", { cache: "no-cache" }).then((r) => { if (!r.ok) throw 0; return r.json(); }).then((d) => {
   ASSUME_META = d;
   ASSUME = Object.fromEntries(d.items.map((x) => [x.id, x]));
-  renderForm();
+  try { renderForm(); }
+  catch (e) { console.warn(e); $("#kpis").innerHTML = calcErrCard("저장된 입력값을 화면에 그리지 못했습니다", String(e?.message || e).slice(0, 160)); return; }
   renderResults();
   if (location.hash === "#stage4") renderAlt();
 }).catch(() => {
   $("#kpis").innerHTML = `<div class="kpi bad"><span class="k">추정 기준을 불러오지 못했습니다</span><span class="d">assumptions.json이 필요합니다</span></div>`;
 });
 </script>
+</body>
+</html>
