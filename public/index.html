@@ -490,6 +490,8 @@ tr.mark td { background: var(--surface-2); }
 .tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; padding: 8px 12px; color: var(--muted); }
 .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
 .ai-status { font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.voice-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12.5px; }
+#btnVoice.rec { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
 .ai-out { font-size: 14px; line-height: 1.7; max-width: 72ch; }
 .ai-out h4 { font-size: 14px; margin: 14px 0 4px; }
 .ai-out ul { margin: 4px 0; padding-left: 20px; }
@@ -547,6 +549,7 @@ tr.mark td { background: var(--surface-2); }
         <label for="infoIn" class="info-label">상담 내용 넣기</label>
         <small class="muted" style="display:block;margin-bottom:4px">AI에는 고객·가구원 이름과 생년월일을 관계·만 나이로 바꿔 보냅니다. 상담 내용에 다른 개인정보(연락처·주소 등)가 있으면 지우고 보내세요.</small>
         <textarea id="infoIn" placeholder="상담에서 들은 내용을 그대로 붙여 넣으세요. 예: 42세 회사원이고 월 450 받아요. 아내는 전업주부, 아이 둘(7살, 4살). 주담대 2억 남았고 금리 4%예요."></textarea>
+        <div class="voice-row" id="voiceRow" hidden><button type="button" class="small" id="btnVoice" aria-pressed="false">🎤 음성 자동 입력</button><span id="voiceStatus" class="muted"></span></div>
         <div class="ai-status">
           <button type="button" class="primary" id="btnClassify">AI로 알맞은 칸에 넣기</button>
           <span id="classifyStatus">아래 칸에 직접 넣어도 됩니다. 아는 것만 넣으면 나머지는 추정값으로 계산합니다.</span>
@@ -3500,6 +3503,100 @@ function renderChecks(list, title, box = "#checks", head = "#checkTitle") {
       ${c.doc || c.use ? `<div class="meta">${c.doc ? `<b>받을 자료</b> ${esc(c.doc)}` : ""}${c.doc && c.use ? " · " : ""}${c.use ? `<b>쓰이는 곳</b> ${esc(c.use)}` : ""}</div>` : ""}
     </div>`).join("");
 }
+
+// ───────────────────── 음성 입력 (상담 내용 넣기) ─────────────────────
+// claude.ai에서는 dictation 기능(claude.ai 음성인식), 그 밖(자체 사이트)에서는 브라우저 음성인식(Web Speech API, ko-KR).
+// 둘 다 안 되는 브라우저에서는 버튼을 숨기고 직접 입력만 받습니다. 인식된 말은 입력칸 끝에 이어 붙습니다.
+(function setupVoice() {
+  const row = $("#voiceRow"), btn = $("#btnVoice"), st = $("#voiceStatus"), ta = $("#infoIn");
+  if (!row || !btn || !st || !ta) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const LISTEN = "듣는 중… 말씀하시면 위 칸에 이어서 적힙니다.";
+  let mode = null, dict = null, rec = null, listening = false, recWanted = false, lastErr = null, useLang = true;
+  function append(text) {
+    let t = String(text || "");
+    if (!t.trim()) return;
+    if (!ta.value || /\s$/.test(ta.value)) t = t.replace(/^\s+/, "");
+    else if (!/^\s/.test(t)) t = " " + t;
+    ta.value += t;
+    ta.scrollTop = ta.scrollHeight;
+  }
+  function draw(on, msg) {
+    listening = on;
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.classList.toggle("rec", on);
+    btn.textContent = on ? "■ 녹음 멈추기" : "🎤 음성 자동 입력";
+    st.textContent = msg != null ? msg : (on ? LISTEN : "");
+  }
+  function useSR() {
+    if (!SR) { row.hidden = true; return; }
+    mode = "sr";
+    rec = new SR();
+    rec.lang = "ko-KR"; rec.continuous = true; rec.interimResults = true;
+    rec.onresult = (e) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) append(r[0].transcript); else interim += r[0].transcript;
+      }
+      if (listening) st.textContent = interim ? "듣는 중… " + interim : LISTEN;
+    };
+    rec.onerror = (e) => {
+      if (e.error === "no-speech" || e.error === "aborted") return; // 조용하면 이어서 다시 듣기
+      recWanted = false;
+      lastErr = (e.error === "not-allowed" || e.error === "service-not-allowed")
+        ? "마이크 사용이 허용되지 않았습니다. 주소창의 마이크 권한을 확인하거나 직접 입력해 주세요."
+        : "음성인식에 문제가 생겼습니다(" + e.error + "). 다시 눌러 주세요.";
+    };
+    rec.onend = () => {
+      if (recWanted) { try { rec.start(); return; } catch (_) {} }
+      recWanted = false;
+      if (listening || lastErr) draw(false, lastErr);
+    };
+    row.hidden = false; draw(false);
+  }
+  function useDict(d) {
+    mode = "dict"; dict = d;
+    d.onPartial(({ text }) => { if (listening) st.textContent = text ? "듣는 중… " + text : LISTEN; });
+    d.onFinal(({ text }) => append(text));
+    d.onState(({ state, reason }) => {
+      if (state === "starting") { draw(true, "마이크 준비 중…"); return; }
+      if (state === "listening") { draw(true); return; }
+      if (state === "finishing") { draw(true, "마지막 말을 받는 중…"); return; }
+      if (reason === "unavailable") {
+        if (useLang) { useLang = false; draw(false, "한국어 지정 음성인식을 쓸 수 없어 기본 언어로 바꿨습니다. 다시 눌러 주세요."); }
+        else row.hidden = true;
+        return;
+      }
+      const why = {
+        not_granted: "음성 입력이 허용되지 않았습니다. 직접 입력해 주세요(페이지의 권한 메뉴에서 다시 켤 수 있습니다).",
+        dismissed: "음성 입력 허용 여부를 고르지 않았습니다. 다시 누르면 다시 묻습니다.",
+        rate_limited: "음성 입력 요청이 많습니다. 잠시 뒤 다시 눌러 주세요.",
+        upstream_error: "마이크나 음성인식에 문제가 생겼습니다. 다시 눌러 주세요.",
+        time_limit: "한 번에 60분까지 녹음됩니다. 다시 눌러 이어서 말씀하세요.",
+        hidden: "화면을 벗어나 녹음이 멈췄습니다. 다시 눌러 주세요.",
+      }[reason];
+      draw(false, why);
+    });
+    row.hidden = false; draw(false);
+  }
+  btn.addEventListener("click", () => {
+    if (mode === "dict") {
+      if (dict.active()) { dict.stop().catch(() => {}); return; }
+      dict.start(useLang ? { language: "ko" } : undefined).catch(() => {}); // 결과는 onState에서 표시
+      return;
+    }
+    if (mode === "sr") {
+      if (listening) { recWanted = false; try { rec.stop(); } catch (_) {} draw(false); return; }
+      recWanted = true; lastErr = null;
+      try { rec.start(); } catch (_) {}
+      draw(true);
+    }
+  });
+  if (window.claude?.use) {
+    Promise.resolve(window.claude.use("dictation")).then((d) => (d ? useDict(d) : useSR())).catch(useSR);
+  } else useSR();
+})();
 
 // ───────────────────── AI ─────────────────────
 // 나중에 자체 페이지로 옮길 때는 askAI / askAIJson 두 함수만 자체 백엔드(Claude API 프록시) 호출로 바꾸면 됩니다.
