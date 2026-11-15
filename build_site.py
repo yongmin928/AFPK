@@ -1,14 +1,34 @@
 # claude.ai용 원본(..\goal-planner.html 등)으로 자체 사이트용 public\ 폴더를 다시 만든다.
 # 사용: python build_site.py   (원본을 고친 뒤 매번 실행)
-import os, shutil
+import os, shutil, json, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.dirname(HERE)  # C:\Users\SAMSUNG\AFPK
 PUB = os.path.join(HERE, "public")
 os.makedirs(PUB, exist_ok=True)
 
+# 0) 사이트의 [반영] 단추는 GitHub의 public/regulations.json을 직접 고친다.
+#    그래서 만들기 전에 GitHub 내용을 먼저 받고, 사이트 쪽 표가 더 새로우면 원본으로 되돌려 복사한다.
+r = subprocess.run(["git", "-C", HERE, "pull", "--ff-only", "-q"], capture_output=True, text=True)
+if r.returncode != 0:
+    sys.exit("GitHub에서 최신 내용을 받지 못했습니다. 먼저 해결하세요:\n" + (r.stderr or r.stdout))
+site_regs, src_regs = os.path.join(PUB, "regulations.json"), os.path.join(SRC, "regulations.json")
+if os.path.exists(site_regs):
+    a, b = json.load(open(site_regs, encoding="utf-8")), json.load(open(src_regs, encoding="utf-8"))
+    if a != b and (a["updated"], len(a["history"])) > (b["updated"], len(b["history"])):
+        shutil.copyfile(site_regs, src_regs)
+        print(f"사이트에서 반영한 규제 표({a['updated']})를 원본 regulations.json으로 가져왔습니다. claude.ai 게시본에도 다시 올려야 합니다.")
+
 for f in ["assumptions.json", "regulations.json", "regulations.html"]:
     shutil.copyfile(os.path.join(SRC, f), os.path.join(PUB, f))
+
+# 규제 페이지: 자체 사이트에서는 관리자 조회·반영 서버 함수에 연결
+rh = os.path.join(PUB, "regulations.html")
+t = open(rh, encoding="utf-8").read()
+for a, b in [('const REFRESH_URL = "";', 'const REFRESH_URL = "api/regs-refresh";'), ('const APPLY_URL = "";', 'const APPLY_URL = "api/regs-apply";')]:
+    assert t.count(a) == 1, ("regulations.html에서 바꿀 곳을 찾지 못함", a)
+    t = t.replace(a, b)
+open(rh, "w", encoding="utf-8").write(t)
 
 s = open(os.path.join(SRC, "goal-planner.html"), encoding="utf-8").read()
 

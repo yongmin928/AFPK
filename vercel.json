@@ -2,6 +2,9 @@
   "functions": {
     "api/ai.js": {
       "maxDuration": 300
+    },
+    "api/regs-refresh.js": {
+      "maxDuration": 300
     }
   },
   "headers": [
