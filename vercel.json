@@ -1,8 +1,40 @@
 {
   "functions": {
-    "api/ai.js": { "maxDuration": 300 }
+    "api/ai.js": {
+      "maxDuration": 300
+    }
   },
   "headers": [
-    { "source": "/(.*).json", "headers": [{ "key": "cache-control", "value": "no-cache" }] }
+    {
+      "source": "/(.*).json",
+      "headers": [
+        {
+          "key": "cache-control",
+          "value": "no-cache"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "cache-control",
+          "value": "no-cache"
+        },
+        {
+          "key": "service-worker-allowed",
+          "value": "/"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "content-type",
+          "value": "application/manifest+json"
+        }
+      ]
+    }
   ]
 }

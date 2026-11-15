@@ -2,6 +2,14 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1c5a48">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="재무목표 설계">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>고객 재무목표 설계</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -5386,5 +5394,6 @@ fetch("assumptions.json", { cache: "no-cache" }).then((r) => { if (!r.ok) throw 
   $("#kpis").innerHTML = `<div class="kpi bad"><span class="k">추정 기준을 불러오지 못했습니다</span><span class="d">assumptions.json이 필요합니다</span></div>`;
 });
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

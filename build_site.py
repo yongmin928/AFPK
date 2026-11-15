@@ -98,6 +98,28 @@ rep(': "값을 고치려면 claude.ai에 로그인한 상태에서 이 페이지
 rep(': "지금은 이 브라우저에만 저장됩니다(claude.ai에 로그인해 열면 공통 저장).";',
     ': window.claude?.use ? "지금은 이 브라우저에만 저장됩니다(claude.ai에 로그인해 열면 공통 저장)." : "이 브라우저에만 저장됩니다.";')
 
+# 4) 앱(PWA): 홈 화면에 설치할 수 있게 manifest·아이콘·서비스 워커를 붙인다 (원본은 pwa\ 폴더)
+PWA = os.path.join(HERE, "pwa")
+PWA_HEAD = ('<link rel="manifest" href="manifest.webmanifest">\n'
+            '<meta name="theme-color" content="#1c5a48">\n'
+            '<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">\n'
+            '<link rel="apple-touch-icon" href="apple-touch-icon.png">\n'
+            '<meta name="apple-mobile-web-app-capable" content="yes">\n'
+            '<meta name="mobile-web-app-capable" content="yes">\n'
+            '<meta name="apple-mobile-web-app-title" content="재무목표 설계">\n'
+            '<meta name="apple-mobile-web-app-status-bar-style" content="default">\n')
+i = s.lower().find("<meta charset")
+j = s.find(">", i) + 1
+s = s[:j] + "\n" + PWA_HEAD + s[j:].lstrip("\n")
+rep("</body>", '<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>\n</body>')
+for f in os.listdir(PWA):
+    if f.endswith((".png", ".webmanifest")):
+        shutil.copyfile(os.path.join(PWA, f), os.path.join(PUB, f))
+import hashlib
+build = hashlib.sha1(s.encode("utf-8")).hexdigest()[:10]  # 페이지가 바뀌면 캐시 이름도 바뀜
+sw = open(os.path.join(PWA, "sw.js"), encoding="utf-8").read().replace("__BUILD__", build)
+open(os.path.join(PUB, "sw.js"), "w", encoding="utf-8", newline=chr(10)).write(sw)
+
 open(os.path.join(PUB, "index.html"), "w", encoding="utf-8", newline=chr(10)).write(s)
 
 # regulations.html: 머리말이 이미 있음. 돌아가기 링크는 ./ 그대로 index.html로 감
