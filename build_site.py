@@ -115,6 +115,9 @@ rep("</body>", '<script>if ("serviceWorker" in navigator) addEventListener("load
 for f in os.listdir(PWA):
     if f.endswith((".png", ".webmanifest")):
         shutil.copyfile(os.path.join(PWA, f), os.path.join(PUB, f))
+# 안드로이드 앱(TWA)이 주소창 없이 열리도록 사이트 소유를 증명하는 파일
+os.makedirs(os.path.join(PUB, ".well-known"), exist_ok=True)
+shutil.copyfile(os.path.join(PWA, ".well-known", "assetlinks.json"), os.path.join(PUB, ".well-known", "assetlinks.json"))
 import hashlib
 build = hashlib.sha1(s.encode("utf-8")).hexdigest()[:10]  # 페이지가 바뀌면 캐시 이름도 바뀜
 sw = open(os.path.join(PWA, "sw.js"), encoding="utf-8").read().replace("__BUILD__", build)
