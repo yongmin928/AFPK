@@ -167,6 +167,12 @@ textarea { resize: vertical; min-height: 70px; }
 .foot-link { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; justify-content: center; padding: 18px 0 4px; border-top: 1px solid var(--line); font-size: 13.5px; }
 .foot-link a { color: var(--accent); font-weight: 600; }
 .foot-link span { color: var(--muted); font-size: 12px; }
+.legal { margin: 14px 0 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface-2); color: var(--muted); font-size: 12px; line-height: 1.65; }
+.legal h2 { margin: 0 0 6px; font-size: 13px; color: var(--ink); }
+.legal ol { margin: 6px 0 0; padding-left: 18px; }
+.legal li { margin: 3px 0; }
+.legal b { color: var(--ink); font-weight: 600; }
+.legal .legal-date { margin: 8px 0 0; font-size: 11.5px; }
 .phase { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr); gap: 6px; align-items: end; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
 .phase .pname { display: flex; flex-direction: column; gap: 1px; font-weight: 600; font-size: 13px; align-self: center; }
 .phase .pname small { font-weight: 400; color: var(--muted); font-size: 11.5px; }
@@ -940,6 +946,23 @@ tr.mark td { background: var(--surface-2); }
     <div class="panel card" id="assumeHistoryBox" hidden><h2>수정 이력</h2><div class="scroll-x"><table id="assumeHistory"></table></div></div>
   </section>
   <footer class="foot-link"><a href="regulations.html">관련 규제 및 법령 보기</a><span id="regStamp"></span><button type="button" class="linkish" id="btnAssume">추정 기준 보기</button></footer>
+  <section class="legal" aria-labelledby="legalTitle">
+    <h2 id="legalTitle">이용 안내 및 법적 고지</h2>
+    <p>이 페이지를 이용하면 아래 내용에 동의한 것으로 봅니다.</p>
+    <ol>
+      <li><b>정보 제공 목적의 참고 도구입니다.</b> 이 페이지는 AFPK 재무설계 과정의 6단계 절차를 연습하고 상담을 준비하기 위해 만든 계산·정리 도구이며, 그 결과는 일반적인 정보와 참고 자료일 뿐입니다.</li>
+      <li><b>투자자문·투자권유·금융상품 자문이 아닙니다.</b> 운영자는 「자본시장과 금융투자업에 관한 법률」에 따른 투자자문업자·투자일임업자나 「금융소비자 보호에 관한 법률」에 따른 금융상품자문업자로 등록되어 있지 않습니다. 이 페이지는 특정 금융투자상품·보험·예금·대출 상품의 매수·매도·가입·해지를 권유하거나 중개하지 않습니다.</li>
+      <li><b>세무·법률 자문이 아닙니다.</b> 세금, 건강보험료, 상속·증여, 부동산, 연금 등에 관한 계산과 설명은 단순화한 추정이며, 「세무사법」·「변호사법」에 따른 세무대리나 법률 자문을 대신하지 않습니다. 실제 신고·계약·처분 전에는 세무사, 변호사, 공인 재무설계사(CFP·AFPK) 등 자격 있는 전문가와 해당 기관에 확인하십시오.</li>
+      <li><b>결과를 보장하지 않습니다.</b> 수익률, 물가상승률, 소득, 지출, 금리, 세율 등은 가정에 따른 추정치입니다. 실제 결과는 시장 상황, 법령 개정, 개인 사정에 따라 크게 달라질 수 있고, 원금 손실이 생길 수 있습니다. 과거 수치나 가정이 미래 성과를 보장하지 않습니다.</li>
+      <li><b>법령·제도 정보는 최신이 아닐 수 있습니다.</b> '관련 규제 및 법령'과 '추정 기준'은 작성 시점 기준으로 정리한 것이며, 시행 예정이거나 검토 중인 내용이 포함될 수 있습니다. 반드시 국가법령정보센터(law.go.kr), 국세청, 국민연금공단, 국민건강보험공단, 금융감독원 등 공식 자료로 확인하십시오.</li>
+      <li><b>AI가 만든 내용이 포함됩니다.</b> 상담 내용 정리, 누락 정보 제안, 종합 평가 초안 등 일부 기능은 생성형 인공지능(AI)이 만든 결과입니다. AI 결과는 틀리거나 사실과 다를 수 있으므로, 설계사와 이용자가 직접 검토한 뒤에만 사용하십시오.</li>
+      <li><b>입력 정보와 개인정보.</b> 입력한 고객 정보는 기본적으로 이용자의 브라우저(이 기기)에만 저장되며, 운영자가 별도로 수집·보관하지 않습니다. 다만 AI 기능이나 음성 입력을 사용하면 해당 내용이 처리를 위해 AI 서비스 제공자(Anthropic 등)나 브라우저의 음성 인식 서비스로 전송됩니다. 주민등록번호, 계좌번호, 카드번호, 상세 주소, 진단서 원문 등 고유식별정보나 민감한 개인정보는 입력하지 마십시오. 타인(고객)의 정보를 입력할 때에는 「개인정보 보호법」에 따라 그 사람의 동의를 받는 등 필요한 절차를 이용자가 직접 갖추어야 합니다. 공용 기기에서는 사용 후 브라우저 저장 데이터를 삭제하십시오.</li>
+      <li><b>예시 고객은 가상 인물입니다.</b> 처음 화면에 보이는 예시 가구와 수치는 교육용으로 만든 가상 사례이며, 실제 인물이나 가구와는 관계가 없습니다.</li>
+      <li><b>책임의 제한.</b> 이용자는 이 페이지의 결과를 스스로 판단하여 사용하며, 이를 근거로 한 투자·가입·계약·신고 등 의사결정과 그 결과에 대한 책임은 이용자에게 있습니다. 운영자는 관련 법령이 허용하는 범위에서 이 페이지의 이용이나 이용 불가, 계산·정보의 오류로 생긴 직접·간접 손해에 대해 책임을 지지 않습니다. 다만 운영자의 고의 또는 중대한 과실로 인한 손해는 예외로 합니다.</li>
+      <li><b>서비스 변경.</b> 이 페이지의 내용, 기능, 계산 기준은 예고 없이 바뀌거나 중단될 수 있습니다.</li>
+    </ol>
+    <p class="legal-date">시행일: 2026년 11월 15일</p>
+  </section>
 </div>
 
 <script>
