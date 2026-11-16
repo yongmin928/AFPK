@@ -12,7 +12,7 @@ const today = () => new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 1
 
 function promptFor(cur, date) {
   const slim = { ...cur, history: cur.history.slice(-5) };
-  return `오늘은 ${date}(한국 시간)입니다. 아래는 한국 재무설계 상담 도구가 쓰는 '관련 규제 및 법령' 표(JSON)입니다. 마지막 갱신은 ${cur.updated}입니다.
+  return `오늘은 ${date}(한국 시간)입니다. 아래는 한국 재무설계 상담 도구가 쓰는 '관련 규제 및 법령' 표(JSON)입니다. 마지막 확인 및 갱신일은 ${cur.updated}입니다.
 
 할 일
 1. 웹 검색으로 이 표의 내용이 지금도 맞는지 확인하고, ${cur.updated} 이후 바뀐 것을 찾으세요. 대상: 부동산 규제지역(조정대상·투기과열·토지거래허가), 규제지역이면 달라지는 대출·세금 규칙, 연말정산 소득·세액공제, 표의 법령 값(국민연금·건강보험·장기요양 요율, 세율 등).
@@ -80,7 +80,7 @@ export function build(cur, res, date) {
   const applied = changes.filter((c) => c.ok);
   next.updated = date;
   if (res.basis && typeof res.basis === "string" && res.basis.trim()) next.basis = res.basis.trim();
-  next.history.push({ date, what: applied.length ? `AI 조회 후 반영: ${applied.map((c) => c.target).filter(Boolean).join(", ")}` : `AI 조회 결과 바뀐 값 없음, 앞으로 바뀔 것 ${outlook.length}건 갱신` });
+  next.history.push({ date, what: applied.length ? `AI 조회 후 반영: ${applied.map((c) => c.target).filter(Boolean).join(", ")}` : `확인: 바뀐 값 없음${outlook.length ? `(앞으로 바뀔 것 ${outlook.length}건 갱신)` : ""}` });
   for (const c of applied) {
     const u = c.source?.url;
     if (u && !next.sources.some((s) => s.url === u)) next.sources.push({ title: c.source.title || u, url: u });
