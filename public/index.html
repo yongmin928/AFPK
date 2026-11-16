@@ -2968,7 +2968,9 @@ function renderAna31(p, a) {
   const accts = p.accounts || [], others = (as.others || []).filter((o) => !blank(o.amount));
   const B = balanceNow(), bsA = B.assetsList, bsL = B.liabList, totA = B.totA, totL = B.totL;
   $("#a31date").textContent = `기준일 ${state.baseDate || ""}, 만 원`;
-  $("#a31bs").innerHTML = `<thead><tr><th>재무상태표</th><th>금액</th></tr></thead><tbody>${bsA.map(([n, v]) => `<tr><td>${esc(n)}</td><td class="num">${f(v)}</td></tr>`).join("")}<tr class="sum"><td>자산 합계</td><td class="num">${f(totA)}</td></tr>${bsL.map(([n, v]) => `<tr><td>부채: ${esc(n)}</td><td class="num">${f(v)}</td></tr>`).join("")}<tr class="sum"><td>부채 합계</td><td class="num">${f(totL)}</td></tr><tr class="sum"><td><b>순자산</b></td><td class="num"><b>${f(totA - totL)}</b></td></tr></tbody>`;
+  // 재무상태표는 소수 첫째 자리까지(반올림한 숫자끼리 빼도 순자산이 맞게)
+  const f1 = (v) => (v == null || !Number.isFinite(v) ? "–" : (v < 0 && Math.round(-v * 10) ? "−" : "") + (Math.round(Math.abs(v) * 10) / 10).toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
+  $("#a31bs").innerHTML = `<thead><tr><th>재무상태표</th><th>금액</th></tr></thead><tbody>${bsA.map(([n, v]) => `<tr><td>${esc(n)}</td><td class="num">${f1(v)}</td></tr>`).join("")}<tr class="sum"><td>자산 합계</td><td class="num">${f1(totA)}</td></tr>${bsL.map(([n, v]) => `<tr><td>부채: ${esc(n)}</td><td class="num">${f1(v)}</td></tr>`).join("")}<tr class="sum"><td>부채 합계</td><td class="num">${f1(totL)}</td></tr><tr class="sum"><td><b>순자산</b></td><td class="num"><b>${f1(totA - totL)}</b></td></tr></tbody>`;
   // 나. 개인재무제표: 현금흐름표(월, 기준일 다음 달) — 재무비율·저축여력 KPI와 같은 계산(cashFlowNow)
   const CF = cashFlowNow(normalize(state, false));
   const { fixed, vari, fixT, varT, interest, ptax, principal } = CF;
