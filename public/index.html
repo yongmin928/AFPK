@@ -635,6 +635,8 @@ input, select, textarea, button { font-variant-numeric: tabular-nums; }
 .alt-table td.alt-judge .alt-critno:placeholder-shown { background: transparent; border: 1px dashed var(--line); color: var(--muted); font-weight: 400; }
 .alt-table td.alt-judge .alt-critno:focus { background: var(--surface); border: 1px solid var(--accent); }
 .alt-table td.alt-memo-td .alt-memo { width: 100%; min-width: 0; }
+/* 적용 기준 칩은 화면에서 숨김(2026-11-16, 사용자 결정). 저장값(state.altCritNo)은 그대로 — 다시 보이려면 이 줄을 지움 */
+.alt-table td.alt-judge .alt-critno { display: none; }
 /* 좁은 화면: 대안 하나를 카드처럼(대안 → 연결 목표·판단 나란히 → 메모) */
 @media (max-width: 760px) {
   .alt-table:has(> colgroup .c-alt), .alt-table:has(> colgroup .c-alt) tbody { display: block; }
@@ -5189,7 +5191,7 @@ function renderAltCore() {
       <td class="alt-judge"><select data-judge="${a.id}" aria-label="${esc(a.name)} 판단">${[...new Set([j, ...opts])].map((o) => `<option${o === j ? " selected" : ""}>${o}</option>`).join("")}</select>${a.flag ? (flagOn(a) && missingReq(a).length ? `<div class="req-warn">값을 넣어야 계산됩니다: ${esc(missingReq(a).join(", "))}</div>` : `<div class="alt-law">${flagOn(a) ? "계산 반영" : "계산 미반영"}</div>`) : ""}<input class="alt-critno" data-critno="${a.id}" type="text" value="${esc(state.altCritNo?.[a.id] ?? a.crit ?? "")}" placeholder="적용 기준" title="적용 기준(A. 선택 기준의 번호)" aria-label="${esc(a.name)} 적용 기준"></td>
       <td class="alt-memo-td"><input class="alt-memo" data-memo="${a.id}" type="text" value="${esc(state.altMemo?.[a.id] ?? "")}" placeholder="판단 근거·효과"></td></tr>`;
   };
-  const head = `<colgroup><col class="c-alt"><col class="c-goal"><col class="c-judge"><col class="c-memo"></colgroup><thead><tr><th>대안 <small class="muted">· 범주 · 근거 법령</small></th><th>연결 목표</th><th>판단 <small class="muted">· 적용 기준</small></th><th>메모</th></tr></thead>`;
+  const head = `<colgroup><col class="c-alt"><col class="c-goal"><col class="c-judge"><col class="c-memo"></colgroup><thead><tr><th>대안 <small class="muted">· 범주 · 근거 법령</small></th><th>연결 목표</th><th>판단</th><th>메모</th></tr></thead>`;
   $("#altTable").innerHTML = head + `<tbody>${sorted(fit).map((a) => rowOf(a)).join("")}</tbody>`;
   const sk = $("#altSkip");
   sk.hidden = !skip.length;
