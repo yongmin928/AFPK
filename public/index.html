@@ -620,6 +620,33 @@ input, select, textarea, button { font-variant-numeric: tabular-nums; }
   .toc.open .toc-in { display: block; }
 }
 @media print { .toc { display: none; } }
+
+/* ===== B. 대안 검토 4열(E2, 2026-11-16): 대안 · 연결 목표 · 판단 · 메모 ===== */
+.alt-table:has(> colgroup .c-alt) { min-width: 0; table-layout: fixed; }
+.alt-table col.c-alt { width: 46%; } .alt-table col.c-goal { width: 17%; } .alt-table col.c-judge { width: 13%; } .alt-table col.c-memo { width: 24%; }
+.alt-table:has(> colgroup .c-alt) td:nth-child(2), .alt-table:has(> colgroup .c-alt) td:nth-child(3) { min-width: 0; max-width: none; }
+.alt-table .alt-cat { display: inline-block; font-size: 12px; font-weight: 600; color: var(--muted); background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; margin-bottom: 4px; }
+.alt-table .alt-name { font-weight: 500; }
+.alt-table .alt-lawline { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.alt-table td.alt-link { min-width: 0; }
+.alt-table td.alt-link select { width: 100%; max-width: 100%; text-overflow: ellipsis; }
+.alt-table td.alt-judge select { width: 100%; }
+.alt-table td.alt-judge .alt-critno { display: block; width: auto; max-width: 100%; margin-top: 6px; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); border-color: transparent; color: var(--accent); font-weight: 600; }
+.alt-table td.alt-judge .alt-critno:placeholder-shown { background: transparent; border: 1px dashed var(--line); color: var(--muted); font-weight: 400; }
+.alt-table td.alt-judge .alt-critno:focus { background: var(--surface); border: 1px solid var(--accent); }
+.alt-table td.alt-memo-td .alt-memo { width: 100%; min-width: 0; }
+/* 좁은 화면: 대안 하나를 카드처럼(대안 → 연결 목표·판단 나란히 → 메모) */
+@media (max-width: 760px) {
+  .alt-table:has(> colgroup .c-alt), .alt-table:has(> colgroup .c-alt) tbody { display: block; }
+  .alt-table:has(> colgroup .c-alt) colgroup, .alt-table:has(> colgroup .c-alt) thead { display: none; }
+  .alt-table:has(> colgroup .c-alt) tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 10px; padding: 12px 4px; border-bottom: 1px solid var(--line); }
+  .alt-table:has(> colgroup .c-alt) td { display: block; padding: 0; border: 0; }
+  .alt-table:has(> colgroup .c-alt) td.alt-main, .alt-table:has(> colgroup .c-alt) td.alt-memo-td { grid-column: 1 / -1; }
+  .alt-table:has(> colgroup .c-alt) td.alt-link::before { content: "연결 목표"; display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+  .alt-table:has(> colgroup .c-alt) td.alt-judge::before { content: "판단"; display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+  .alt-table:has(> colgroup .c-alt) tr.on { box-shadow: inset 3px 0 0 var(--accent); padding-left: 10px; }
+  .alt-table:has(> colgroup .c-alt) tr.on td:first-child { box-shadow: none; }
+}
 </style>
 </head>
 <body>
@@ -5154,16 +5181,15 @@ function renderAltCore() {
   const rowOf = (a, why) => {
     const j = judgeOf(a), opts = a.flag ? JUDGES_CALC : JUDGES_INFO;
     const params = a.custom ? custParams(a.custom) : (a.params || []).map(param).join("");
+    // E2: 4열(대안 · 연결 목표 · 판단 · 메모). 범주는 대안 위 꼬리표, 근거 법령은 대안 아래, 적용 기준은 판단 아래 칩. 값·저장 방식은 그대로
+    const law = !a.custom && a.law && a.law.trim() !== "-" ? `<div class="alt-lawline">${esc(a.law)}</div>` : "";
     return `<tr class="${a.flag ? (flagOn(a) ? "on" : "off") : ""}">
-      <td class="alt-goal">${esc(a.cat)}</td>
+      <td class="alt-main"><span class="alt-cat">${esc(a.cat)}</span>${a.custom ? "" : `<div class="alt-name">${esc(a.name)}</div>`}${why ? `<div class="alt-why">해당 없음: ${esc(why)}</div>` : ""}${a.auto ? `<div class="alt-law">${esc(a.auto)}</div>` : ""}${law}${params ? (a.custom ? params : `<div class="alt-params">${params}</div>`) : ""}</td>
       <td class="alt-link">${linkSel(a)}</td>
-      <td>${a.custom ? "" : esc(a.name)}${why ? `<div class="alt-why">해당 없음: ${esc(why)}</div>` : ""}${a.auto ? `<div class="alt-law">${esc(a.auto)}</div>` : ""}${params ? (a.custom ? params : `<div class="alt-params">${params}</div>`) : ""}</td>
-      <td class="alt-law">${esc(a.law)}</td>
-      <td><select data-judge="${a.id}" aria-label="${esc(a.name)} 판단">${[...new Set([j, ...opts])].map((o) => `<option${o === j ? " selected" : ""}>${o}</option>`).join("")}</select>${a.flag ? (flagOn(a) && missingReq(a).length ? `<div class="req-warn">값을 넣어야 계산됩니다: ${esc(missingReq(a).join(", "))}</div>` : `<div class="alt-law">${flagOn(a) ? "계산 반영" : "계산 미반영"}</div>`) : ""}</td>
-      <td><input class="alt-critno" data-critno="${a.id}" type="text" value="${esc(state.altCritNo?.[a.id] ?? a.crit ?? "")}" placeholder="기준 번호" aria-label="${esc(a.name)} 적용 기준"></td>
-      <td><input class="alt-memo" data-memo="${a.id}" type="text" value="${esc(state.altMemo?.[a.id] ?? "")}" placeholder="판단 근거·효과"></td></tr>`;
+      <td class="alt-judge"><select data-judge="${a.id}" aria-label="${esc(a.name)} 판단">${[...new Set([j, ...opts])].map((o) => `<option${o === j ? " selected" : ""}>${o}</option>`).join("")}</select>${a.flag ? (flagOn(a) && missingReq(a).length ? `<div class="req-warn">값을 넣어야 계산됩니다: ${esc(missingReq(a).join(", "))}</div>` : `<div class="alt-law">${flagOn(a) ? "계산 반영" : "계산 미반영"}</div>`) : ""}<input class="alt-critno" data-critno="${a.id}" type="text" value="${esc(state.altCritNo?.[a.id] ?? a.crit ?? "")}" placeholder="적용 기준" title="적용 기준(A. 선택 기준의 번호)" aria-label="${esc(a.name)} 적용 기준"></td>
+      <td class="alt-memo-td"><input class="alt-memo" data-memo="${a.id}" type="text" value="${esc(state.altMemo?.[a.id] ?? "")}" placeholder="판단 근거·효과"></td></tr>`;
   };
-  const head = `<thead><tr><th>범주</th><th>연결 목표</th><th>대안</th><th>근거 법령</th><th>판단</th><th>적용 기준</th><th>메모</th></tr></thead>`;
+  const head = `<colgroup><col class="c-alt"><col class="c-goal"><col class="c-judge"><col class="c-memo"></colgroup><thead><tr><th>대안 <small class="muted">· 범주 · 근거 법령</small></th><th>연결 목표</th><th>판단 <small class="muted">· 적용 기준</small></th><th>메모</th></tr></thead>`;
   $("#altTable").innerHTML = head + `<tbody>${sorted(fit).map((a) => rowOf(a)).join("")}</tbody>`;
   const sk = $("#altSkip");
   sk.hidden = !skip.length;
