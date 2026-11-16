@@ -17,40 +17,47 @@
 <style>
 /* 레이아웃: 왼쪽 고객 정보 입력 원장, 오른쪽 진단 결과(지표 → 차트 → 목표 → AI → 연도별 표). 좁은 화면에선 한 열. */
 :root {
-  --bg: #eef2f0;
+  /* 색상 A(2026-11-16): 네이비 + 골드 */
+  --bg: #f1f3f7;
   --surface: #ffffff;
-  --surface-2: #f6f8f7;
-  --ink: #16201c;
-  --muted: #5a6862;
-  --line: #d6dfda;
-  --accent: #1c5a48;
+  --surface-2: #f5f7fa;
+  --ink: #172033;
+  --muted: #5b6474;
+  --line: #d9dee8;
+  --accent: #1f3a63;
   --accent-ink: #ffffff;
-  --accent-soft: #dfeee7;
+  --accent-soft: #e7edf6;
+  --gold: #c9a227;
+  --gold-soft: #e9c46a;
+  --gold-ink: #4a3500;
+  --hero-1: #14284a;
+  --hero-2: #1f3a63;
+  --hero-3: #2c5288;
   --good: #1f7a4d;
   --good-soft: #e0f1e8;
   --warn: #9a5b00;
   --warn-soft: #fbefd9;
   --bad: #b3261e;
   --bad-soft: #fbe3e1;
-  --chart-area: rgba(28, 90, 72, .14);
+  --chart-area: rgba(31, 58, 99, .14);
   --font-body: "CircNum", "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --font-num: var(--font-body); /* 숫자도 본문 글꼴 + 자릿수 맞춤(tabular-nums) */
   --r: 10px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f1412; --surface: #171e1b; --surface-2: #1c2521; --ink: #e5ece8; --muted: #95a49d; --line: #2a3632;
-    --accent: #62c39f; --accent-ink: #0d1a15; --accent-soft: #1b3128;
+    --bg: #0e131b; --surface: #161d28; --surface-2: #1b2431; --ink: #e6ebf3; --muted: #9aa6b8; --line: #2a3546;
+    --accent: #8fb3e8; --accent-ink: #0b1424; --accent-soft: #1b2a40;
     --good: #62c39f; --good-soft: #17302a; --warn: #e3a645; --warn-soft: #33281a; --bad: #f2786d; --bad-soft: #3a1f1d;
-    --chart-area: rgba(98, 195, 159, .16);
+    --chart-area: rgba(143, 179, 232, .16);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0f1412; --surface: #171e1b; --surface-2: #1c2521; --ink: #e5ece8; --muted: #95a49d; --line: #2a3632;
-  --accent: #62c39f; --accent-ink: #0d1a15; --accent-soft: #1b3128;
+  --bg: #0e131b; --surface: #161d28; --surface-2: #1b2431; --ink: #e6ebf3; --muted: #9aa6b8; --line: #2a3546;
+  --accent: #8fb3e8; --accent-ink: #0b1424; --accent-soft: #1b2a40;
   --good: #62c39f; --good-soft: #17302a; --warn: #e3a645; --warn-soft: #33281a; --bad: #f2786d; --bad-soft: #3a1f1d;
-  --chart-area: rgba(98, 195, 159, .16);
+  --chart-area: rgba(143, 179, 232, .16);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -637,6 +644,72 @@ input, select, textarea, button { font-variant-numeric: tabular-nums; }
 .alt-table td.alt-memo-td .alt-memo { width: 100%; min-width: 0; }
 /* 적용 기준 칩은 화면에서 숨김(2026-11-16, 사용자 결정). 저장값(state.altCritNo)은 그대로 — 다시 보이려면 이 줄을 지움 */
 .alt-table td.alt-judge .alt-critno { display: none; }
+
+/* ===== 디자인 3차 (2026-11-16): 네이비·골드, 제목 강조(F1~F5), 아이콘(G1), 진행 칩(G2), 표(G4), 움직임(G5) ===== */
+/* F1 머리 띠 */
+header.top { background: linear-gradient(135deg, var(--hero-1) 0%, var(--hero-2) 45%, var(--hero-3) 100%); color: #fff; padding: 28px 28px 22px; border-radius: 16px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(20, 40, 74, .18); align-items: flex-end; }
+header.top::after { content: ""; position: absolute; right: -60px; top: -80px; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.16), rgba(255,255,255,0) 70%); pointer-events: none; }
+header.top > * { position: relative; z-index: 1; }
+header.top h1 { font-size: 30px; font-weight: 800; letter-spacing: -.02em; color: #fff; }
+header.top p { color: rgba(255,255,255,.8); margin-top: 6px; }
+header.top .example-tag { background: var(--gold-soft); color: var(--gold-ink); vertical-align: 6px; }
+header.top .stage-nav { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.2); margin-top: 14px; }
+header.top .stage-nav a { color: rgba(255,255,255,.82); }
+header.top .stage-nav a:hover { color: #fff; }
+header.top .stage-nav a[aria-current="page"] { background: #fff; color: var(--hero-1); }
+header.top .actions button { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); color: #fff; }
+header.top .actions button:hover:not(:disabled) { background: rgba(255,255,255,.2); border-color: #fff; color: #fff; }
+header.top #btnCopy, header.top #btnPaste { background: transparent; border-color: transparent; color: rgba(255,255,255,.75); }
+header.top #btnCopy { border-left: 1px solid rgba(255,255,255,.3); }
+header.top #btnCopy:hover, header.top #btnPaste:hover { background: transparent; color: #fff; }
+/* F2 단계 제목 */
+.ledger > .stage-h { background: linear-gradient(90deg, var(--accent-soft), transparent 85%); border-top: 0; padding: 18px 16px 14px; font-size: 20px; }
+.stage-no { font-size: 13px; padding: 4px 10px; border-radius: 8px; }
+.card-head h2:has(> .stage-no) { font-size: 22px; }
+.alt-view > .panel:first-child { background: linear-gradient(180deg, var(--accent-soft), var(--surface) 70%); }
+/* F3 카드 제목 앞 막대(아이콘이 붙은 구역 제목은 아이콘으로 대신) */
+.card-head h2:not(:has(> .stage-no))::before { content: ""; display: inline-block; width: 4px; height: .95em; border-radius: 2px; background: var(--accent); margin-right: 8px; vertical-align: -2px; }
+.ledger legend { font-size: 16px; font-weight: 700; align-items: center; }
+.ledger legend > span:first-child { display: inline-flex; align-items: center; flex-wrap: wrap; column-gap: 6px; }
+.ledger legend > span:first-child > .ic { margin-right: 2px; }
+/* F4 카드 그림자 */
+.panel, .kpi, .toc-in { border-color: rgba(20, 40, 74, .08); box-shadow: 0 1px 2px rgba(20, 40, 74, .04), 0 6px 20px rgba(20, 40, 74, .06); }
+/* F5 숫자 카드 */
+.kpi { border-top: 3px solid var(--accent); padding-top: 14px; }
+.kpi.good { border-top-color: var(--good); } .kpi.warn { border-top-color: var(--warn); } .kpi.bad { border-top-color: var(--bad); }
+.kpi .v { font-size: 26px; font-weight: 700; }
+.next-stage { background: linear-gradient(135deg, var(--hero-1), var(--hero-3)); box-shadow: 0 6px 18px rgba(20, 40, 74, .22); }
+/* G1 아이콘 */
+.ic { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); margin-right: 8px; flex: none; }
+.ic svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.toc-list .ic { width: 20px; height: 20px; border-radius: 6px; margin-right: 6px; background: transparent; vertical-align: -5px; }
+.toc-list .ic svg { width: 15px; height: 15px; }
+.toc-list li.on .ic { background: var(--surface); }
+/* G2 단계 진행 칩 */
+header.top .stage-nav a { display: inline-flex; align-items: center; gap: 6px; }
+.np { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--gold-soft); color: var(--gold-ink); white-space: nowrap; }
+.np:empty { display: none; }
+.np.todo { background: rgba(255,255,255,.18); color: #fff; }
+header.top .stage-nav a[aria-current="page"] .np { background: var(--hero-2); color: #fff; }
+/* G4 연도별 표 */
+.yearly table th { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.yearly table tbody tr:nth-child(even) td { background: var(--surface-2); }
+.yearly table tbody tr:hover td { background: var(--accent-soft); }
+.yearly table td:first-child { font-weight: 600; color: var(--accent); }
+/* G5 움직임: 마우스를 올리면 살짝 떠오름(움직임 줄이기 설정이면 끔) */
+.kpi { transition: transform .18s ease, box-shadow .18s ease; }
+.kpi:hover { transform: translateY(-3px); box-shadow: 0 2px 4px rgba(20, 40, 74, .05), 0 14px 30px rgba(20, 40, 74, .14); }
+@media (prefers-reduced-motion: reduce) { .kpi { transition: none; } .kpi:hover { transform: none; } }
+/* 좁은 화면 */
+@media (max-width: 640px) {
+  header.top { padding: 20px 16px 16px; border-radius: 14px; }
+  header.top h1 { font-size: 24px; }
+  header.top .stage-nav { display: flex; width: 100%; }
+  header.top .stage-nav a { flex: 1 1 0; justify-content: center; flex-wrap: wrap; padding: 6px 4px; font-size: 12px; text-align: center; gap: 2px 4px; }
+  header.top #btnCopy { border-left: 0; }
+  .ledger > .stage-h { font-size: 18px; }
+  .card-head h2:has(> .stage-no) { font-size: 19px; }
+}
 /* 좁은 화면: 대안 하나를 카드처럼(대안 → 연결 목표·판단 나란히 → 메모) */
 @media (max-width: 760px) {
   .alt-table:has(> colgroup .c-alt), .alt-table:has(> colgroup .c-alt) tbody { display: block; }
@@ -5677,6 +5750,49 @@ fetch("assumptions.json", { cache: "no-cache" }).then((r) => { if (!r.ok) throw 
   const list = nav.querySelector(".toc-list"), toggle = nav.querySelector(".toc-toggle");
   let items = [], activeIdx = -1;
 
+  // G1 구역 아이콘(선 아이콘, 직접 그린 SVG): ① 구역 제목과 목차에 붙임
+  const ICONS = {
+    chat: '<path d="M4 5h16v10H9l-5 4z"/>',
+    target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+    users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 13.8c2 .9 3.5 3 3.5 5.7"/>',
+    home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',
+    coins: '<ellipse cx="9" cy="7" rx="6" ry="3"/><path d="M3 7v5c0 1.7 2.7 3 6 3s6-1.3 6-3V7"/><path d="M15 11.5c3 .2 6 1.4 6 3.5v3c0 1.7-2.7 3-6 3-2.2 0-4.1-.6-5.2-1.5"/>',
+    receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    shield: '<path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/>',
+    sunset: '<path d="M3 18h18M6 18a6 6 0 0 1 12 0M12 6v3M5.6 9.6l2 2M18.4 9.6l-2 2"/>',
+    wallet: '<path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7l12-4v4"/><circle cx="16.5" cy="13.5" r="1.2"/>',
+    card: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',
+    bank: '<path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>',
+    shieldok: '<path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    file: '<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>',
+    heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+    sliders: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+    pencil: '<path d="M4 20l4-1 11-11-3-3L5 16z"/>',
+  };
+  const ICON_OF = { "상담 내용 넣기": "chat", "관계 정립": "chat", "재무목표": "target", "가구원": "users", "거주": "home", "가구원 외 소득": "coins", "월 지출": "receipt", "보험(보장)": "shield", "은퇴 후 생활비": "sunset", "자산": "wallet", "부채": "card", "국민연금": "bank", "위험관리·보험": "shieldok", "세무·기타": "file", "가족·가치관·계획": "heart", "계산 가정": "sliders", "상담 메모": "pencil" };
+  const iconHtml = (label) => { const k = ICON_OF[label]; return k ? `<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24">${ICONS[k]}</svg></span>` : ""; };
+  const decorateLegends = () => document.querySelectorAll(".ledger > fieldset > legend").forEach((lg) => {
+    if (lg.querySelector(".ic")) return;
+    const host = lg.querySelector(":scope > span") || lg;
+    const label = Object.keys(ICON_OF).filter((k) => host.textContent.trim().startsWith(k)).sort((a, b) => b.length - a.length)[0];
+    if (!label) return;
+    if (host === lg) { // 글자만 있는 제목은 아이콘과 함께 왼쪽 정렬
+      const s = document.createElement("span"); while (lg.firstChild) s.appendChild(lg.firstChild); lg.appendChild(s);
+      s.insertAdjacentHTML("afterbegin", iconHtml(label));
+    } else host.insertAdjacentHTML("afterbegin", iconHtml(label));
+  });
+  // G2 단계 진행 칩: ① 필수 정보 수 · ② 분석 가능 여부 · ③ 계산에 반영된 대안 수(B표와 같은 셈)
+  const chip = (id) => { const a = document.getElementById(id); if (!a) return null; let c = a.querySelector(".np"); if (!c) { c = document.createElement("span"); c.className = "np"; a.appendChild(c); } return c; };
+  function updateChips() {
+    try {
+      const req = requiredStatus(state), done = req.filter((r) => r.done).length, all = done === req.length;
+      const c1 = chip("nav12"); c1.textContent = all ? `✓ ${done}/${req.length}` : `${done}/${req.length}`; c1.classList.toggle("todo", !all);
+      const c3 = chip("nav3"); const ready = Object.keys(ASSUME).length > 0 && normalize(state, false).ready; c3.textContent = ready ? "✓ 분석" : ""; c3.classList.remove("todo");
+      const n = allAlts().filter((a) => a.flag && flagOn(a) && !missingReq(a).length).length;
+      const c4 = chip("nav4"); c4.textContent = n ? `채택 ${n}` : ""; c4.classList.remove("todo");
+    } catch (e) {}
+  }
+
   const clean = (el) => {
     const c = el.cloneNode(true);
     c.querySelectorAll("small, button, .base-date, em.req, select, input, textarea, .note, .pill").forEach((x) => x.remove());
@@ -5714,6 +5830,7 @@ fetch("assumptions.json", { cache: "no-cache" }).then((r) => { if (!r.ok) throw 
   };
 
   function build() {
+    decorateLegends(); updateChips();
     const v = view();
     nav.hidden = !v;
     if (!v) return;
@@ -5739,7 +5856,7 @@ fetch("assumptions.json", { cache: "no-cache" }).then((r) => { if (!r.ok) throw 
     const sig = out.map((o) => o.lvl + o.label + (o.warn ? "!" : "") + o.desc).join("|");
     if (sig === list.dataset.sig) { items.forEach((it, i) => (it.el = out[i].el)); spy(); return; }
     list.dataset.sig = sig; items = out; activeIdx = -1;
-    list.innerHTML = out.map((o, i) => `<li class="lvl${o.lvl}${o.warn ? " warn" : ""}"><a href="#" data-toc="${i}"${o.desc ? ` title="${o.desc.replace(/"/g, "&quot;")}"` : ""}>${o.label.replace(/</g, "&lt;")}</a>${o.desc ? `<span class="toc-desc">${o.desc.replace(/</g, "&lt;")}</span>` : ""}</li>`).join("");
+    list.innerHTML = out.map((o, i) => `<li class="lvl${o.lvl}${o.warn ? " warn" : ""}"><a href="#" data-toc="${i}"${o.desc ? ` title="${o.desc.replace(/"/g, "&quot;")}"` : ""}>${iconHtml(o.label)}${o.label.replace(/</g, "&lt;")}</a>${o.desc ? `<span class="toc-desc">${o.desc.replace(/</g, "&lt;")}</span>` : ""}</li>`).join("");
     spy();
   }
   // 지금 보고 있는 구역: 화면 위쪽(140px)을 지난 마지막 소제목. 오른쪽 고정 칸(종합 평가 등)은 위치 판정에서 뺀다
