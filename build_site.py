@@ -21,6 +21,8 @@ if os.path.exists(site_regs):
 
 for f in ["assumptions.json", "regulations.json", "regulations.html"]:
     shutil.copyfile(os.path.join(SRC, f), os.path.join(PUB, f))
+# 글꼴(Pretendard, OFL): fonts/ 폴더째 복사
+shutil.copytree(os.path.join(SRC, "fonts"), os.path.join(PUB, "fonts"), dirs_exist_ok=True)
 
 # 규제 페이지: 자체 사이트에서는 관리자 조회·반영 서버 함수에 연결
 rh = os.path.join(PUB, "regulations.html")

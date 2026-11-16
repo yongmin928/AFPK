@@ -4,16 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>관련 규제 및 법령</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="fonts/pretendard.css">
 <style>
 /* 메인 페이지와 같은 색·글꼴. 규제지역 표 하나를 보여 주는 참고 페이지 */
 :root {
   --bg: #eef2f0; --surface: #ffffff; --surface-2: #f6f8f7; --ink: #16201c; --muted: #5a6862; --line: #d6dfda;
   --accent: #1c5a48; --accent-soft: #dfeee7; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #b3261e; --bad-soft: #fbe3e1;
-  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-  --font-num: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --font-body: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-num: var(--font-body);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -59,6 +57,7 @@ li + li { margin-top: 4px; }
 .k-income { color: var(--warn); font-weight: 600; }
 .sec-note { color: var(--muted); font-size: 12.5px; margin: -4px 0 10px; }
 td small { color: var(--muted); }
+body { font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>

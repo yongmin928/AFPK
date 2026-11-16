@@ -13,9 +13,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>고객 재무목표 설계</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="fonts/pretendard.css">
 <style>
 /* 레이아웃: 왼쪽 고객 정보 입력 원장, 오른쪽 진단 결과(지표 → 차트 → 목표 → AI → 연도별 표). 좁은 화면에선 한 열. */
 :root {
@@ -35,8 +33,8 @@
   --bad: #b3261e;
   --bad-soft: #fbe3e1;
   --chart-area: rgba(28, 90, 72, .14);
-  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --font-body: "CircNum", "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-num: var(--font-body); /* 숫자도 본문 글꼴 + 자릿수 맞춤(tabular-nums) */
   --r: 10px;
 }
 @media (prefers-color-scheme: dark) {
@@ -586,6 +584,13 @@ td.neg, .neg { color: var(--bad); }
 .rows, .checks, .proposals { gap: 8px; }
 input:not([type="checkbox"]):not([type="radio"]), select, textarea { border-radius: 8px; }
 .yearly, .exp-sum, .prop, .radio, .tip { border-radius: 8px; }
+
+/* ===== 글꼴 (2026-11-16): Pretendard 하나로 본문·숫자 모두. 숫자는 자릿수 맞춤 ===== */
+/* Pretendard의 ①②③은 너무 작아서 동그라미 숫자만 시스템 한글 글꼴로 */
+@font-face { font-family: "CircNum"; src: local("Malgun Gothic"), local("Apple SD Gothic Neo"), local("AppleSDGothicNeo-Regular"), local("Noto Sans CJK KR"), local("Noto Sans KR"); unicode-range: U+2460-24FF, U+2776-2793; }
+body { font-variant-numeric: tabular-nums; letter-spacing: -.005em; }
+input, select, textarea, button { font-variant-numeric: tabular-nums; }
+.kpi .v { font-weight: 600; letter-spacing: -.02em; }
 </style>
 </head>
 <body>
