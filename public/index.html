@@ -1101,9 +1101,9 @@ input, select, textarea, button { font-variant-numeric: tabular-nums; }
 
 <script>
 // ───────────────────── 데이터 ─────────────────────
-// 기본 항목 사전: AFPK 6차 통합계산서 2-2 계량정보(K·S·C·R·P·T·E)와 2-3 비계량정보(N) 수집 항목
+// 기본 항목 사전: 2-2 계량정보(K·S·C·R·P·T·E)와 2-3 비계량정보(N) 수집 항목
 const BASE_TEMPLATE = [{"code": "K01", "group": "계량", "cat": "고객 기초정보", "sub": "가구", "name": "가구원 생년월일·만 나이", "target": "가구", "unit": "", "goal": "전체", "q": ""}, {"code": "K02", "group": "계량", "cat": "고객 기초정보", "sub": "직업", "name": "직업과 소득 형태", "target": "남편·아내", "unit": "", "goal": "전체", "q": ""}, {"code": "K03", "group": "계량", "cat": "고객 기초정보", "sub": "거주", "name": "거주 형태와 지역", "target": "가구", "unit": "", "goal": "4순위", "q": ""}, {"code": "S01", "group": "계량", "cat": "재무상태표", "sub": "금융자산-현금성", "name": "보통예금·CMA", "target": "남편·아내", "unit": "만 원", "goal": "1순위", "q": ""}, {"code": "S02", "group": "계량", "cat": "재무상태표", "sub": "금융자산-저축성", "name": "정기예금", "target": "부부", "unit": "만 원", "goal": "1순위", "q": ""}, {"code": "S03", "group": "계량", "cat": "재무상태표", "sub": "금융자산-저축성", "name": "저축성보험", "target": "가구", "unit": "만 원", "goal": "", "q": ""}, {"code": "S04", "group": "계량", "cat": "재무상태표", "sub": "금융자산-투자", "name": "주식·펀드·ETF", "target": "남편·아내", "unit": "만 원", "goal": "", "q": ""}, {"code": "S05", "group": "계량", "cat": "재무상태표", "sub": "금융자산-투자", "name": "연금저축", "target": "남편·아내", "unit": "만 원", "goal": "", "q": ""}, {"code": "S06", "group": "계량", "cat": "재무상태표", "sub": "금융자산-투자", "name": "IRP", "target": "아내", "unit": "만 원", "goal": "1순위·4순위", "q": ""}, {"code": "S07", "group": "계량", "cat": "재무상태표", "sub": "금융자산-투자", "name": "기타 투자 금융자산(ISA 등)", "target": "본인·배우자", "unit": "만 원", "goal": "", "q": ""}, {"code": "S08", "group": "계량", "cat": "재무상태표", "sub": "사용자산", "name": "거주 주택", "target": "남편 단독명의", "unit": "만 원", "goal": "4순위", "q": ""}, {"code": "S09", "group": "계량", "cat": "재무상태표", "sub": "사용자산", "name": "자동차", "target": "가구", "unit": "만 원", "goal": "", "q": ""}, {"code": "S10", "group": "계량", "cat": "재무상태표", "sub": "부동산자산", "name": "거주 외 부동산", "target": "가구", "unit": "만 원", "goal": "", "q": ""}, {"code": "S11", "group": "계량", "cat": "재무상태표", "sub": "기타자산", "name": "남편 DB 퇴직급여(기준일 퇴직 가정)", "target": "남편", "unit": "만 원", "goal": "4순위", "q": ""}, {"code": "S12", "group": "계량", "cat": "재무상태표", "sub": "기타자산", "name": "보장성보험 해약환급금", "target": "가구", "unit": "만 원", "goal": "", "q": ""}, {"code": "S13", "group": "계량", "cat": "재무상태표", "sub": "기타자산", "name": "개인 대여금", "target": "가구", "unit": "만 원", "goal": "", "q": ""}, {"code": "S14", "group": "계량", "cat": "재무상태표", "sub": "부채", "name": "주택담보대출", "target": "남편", "unit": "만 원", "goal": "1순위·4순위", "q": ""}, {"code": "S15", "group": "계량", "cat": "재무상태표", "sub": "부채", "name": "신용카드 미결제액", "target": "남편", "unit": "만 원", "goal": "", "q": ""}, {"code": "S16", "group": "계량", "cat": "재무상태표(미포함)", "sub": "공적연금", "name": "국민연금 가입기간", "target": "남편·아내", "unit": "", "goal": "4순위", "q": ""}, {"code": "C01", "group": "계량", "cat": "현금흐름표", "sub": "수입", "name": "남편 근로소득(세후)", "target": "남편", "unit": "만 원/월", "goal": "전체", "q": ""}, {"code": "C02", "group": "계량", "cat": "현금흐름표", "sub": "수입", "name": "아내 수입", "target": "아내", "unit": "만 원/월", "goal": "1순위", "q": ""}, {"code": "C03", "group": "계량", "cat": "현금흐름표", "sub": "수입", "name": "기타 수입", "target": "가구", "unit": "만 원/월", "goal": "1순위", "q": ""}, {"code": "C04", "group": "계량", "cat": "현금흐름표", "sub": "고정지출", "name": "대출이자", "target": "남편", "unit": "만 원/월", "goal": "1순위", "q": ""}, {"code": "C05", "group": "계량", "cat": "현금흐름표", "sub": "고정지출", "name": "보장성 보험료(실손)", "target": "가구", "unit": "만 원/월", "goal": "1순위", "q": ""}, {"code": "C06", "group": "계량", "cat": "현금흐름표", "sub": "고정지출", "name": "관리비", "target": "가구", "unit": "만 원/월", "goal": "", "q": ""}, {"code": "C07", "group": "계량", "cat": "현금흐름표", "sub": "고정지출", "name": "재산세 등", "target": "남편", "unit": "만 원/월", "goal": "", "q": ""}, {"code": "C08", "group": "계량", "cat": "현금흐름표", "sub": "고정지출", "name": "자동차보험료", "target": "가구", "unit": "만 원/월", "goal": "", "q": ""}, {"code": "C09", "group": "계량", "cat": "현금흐름표", "sub": "고정지출", "name": "자동차세", "target": "가구", "unit": "만 원/월", "goal": "", "q": ""}, {"code": "C10", "group": "계량", "cat": "현금흐름표", "sub": "고정지출", "name": "현재 모친 지원액", "target": "모친", "unit": "만 원/월", "goal": "5순위", "q": ""}, {"code": "C11", "group": "계량", "cat": "현금흐름표", "sub": "변동지출", "name": "식비", "target": "가구", "unit": "만 원/월", "goal": "", "q": ""}, {"code": "C12", "group": "계량", "cat": "현금흐름표", "sub": "변동지출", "name": "교통·통신·여가", "target": "가구", "unit": "만 원/월", "goal": "", "q": ""}, {"code": "C13", "group": "계량", "cat": "현금흐름표", "sub": "변동지출", "name": "자녀 사교육비", "target": "아들·딸", "unit": "만 원/월", "goal": "2순위", "q": ""}, {"code": "C14", "group": "계량", "cat": "현금흐름표", "sub": "변동지출", "name": "자녀 현재 용돈", "target": "아들·딸", "unit": "만 원/월", "goal": "2순위", "q": ""}, {"code": "C15", "group": "계량", "cat": "현금흐름표", "sub": "변동지출", "name": "아내 기타 의료비(치료 중 · 키트루다 제외)", "target": "아내", "unit": "만 원/월", "goal": "1순위", "q": ""}, {"code": "C16", "group": "계량", "cat": "현금흐름표", "sub": "저축·투자액", "name": "주담대 원금 상환", "target": "남편", "unit": "만 원/월", "goal": "", "q": ""}, {"code": "R01", "group": "계량", "cat": "위험관리", "sub": "보험 계약", "name": "부부·자녀 보험", "target": "가구", "unit": "", "goal": "1순위·3순위", "q": ""}, {"code": "R02", "group": "계량", "cat": "위험관리", "sub": "실손보험", "name": "실손 세대·한도", "target": "가구", "unit": "", "goal": "1순위", "q": ""}, {"code": "R03", "group": "계량", "cat": "위험관리", "sub": "기수령 보험금", "name": "아내 보험금", "target": "아내", "unit": "만 원", "goal": "1순위", "q": ""}, {"code": "R04", "group": "계량", "cat": "위험관리", "sub": "단체보험", "name": "남편 회사 단체보험", "target": "남편", "unit": "", "goal": "", "q": ""}, {"code": "P01", "group": "계량", "cat": "퇴직·고용", "sub": "퇴직연금", "name": "남편 퇴직연금 규약", "target": "남편", "unit": "", "goal": "3순위·4순위", "q": ""}, {"code": "P02", "group": "계량", "cat": "퇴직·고용", "sub": "근로조건", "name": "가족돌봄 근로시간 단축", "target": "남편", "unit": "", "goal": "3순위", "q": ""}, {"code": "P03", "group": "계량", "cat": "퇴직·고용", "sub": "아내 퇴직급여", "name": "아내 퇴직급여", "target": "아내", "unit": "만 원", "goal": "1순위", "q": ""}, {"code": "T01", "group": "계량", "cat": "세무·건보", "sub": "근로소득세", "name": "남편 2026 귀속 결정세액", "target": "남편", "unit": "만 원/년", "goal": "1순위·5순위", "q": ""}, {"code": "T02", "group": "계량", "cat": "세무·건보", "sub": "부동산 세금", "name": "재산세·종부세", "target": "남편", "unit": "만 원/년", "goal": "4순위", "q": ""}, {"code": "T03", "group": "계량", "cat": "세무·건보", "sub": "건강보험", "name": "가입 형태", "target": "가구", "unit": "", "goal": "1순위·4순위", "q": ""}, {"code": "E01", "group": "계량", "cat": "기타", "sub": "산정특례", "name": "아내 산정특례", "target": "아내", "unit": "", "goal": "1순위", "q": ""}, {"code": "E02", "group": "계량", "cat": "기타", "sub": "부양가족", "name": "모친 소득·재산", "target": "모친", "unit": "만 원", "goal": "5순위", "q": ""}, {"code": "N01", "group": "비계량", "cat": "가족", "sub": "", "name": "가구 구성·관계", "target": "가구", "unit": "", "goal": "전체", "q": "함께 사는 가족과 따로 사는 가족을 알려주세요"}, {"code": "N02", "group": "비계량", "cat": "가족", "sub": "", "name": "가족 의사결정 방식", "target": "부부", "unit": "", "goal": "전체", "q": "재무 결정은 누가 어떻게 내리시나요"}, {"code": "N03", "group": "비계량", "cat": "건강", "sub": "", "name": "아내 건강 상태·치료 단계", "target": "아내", "unit": "", "goal": "1·3순위", "q": "현재 치료 단계와 앞으로의 치료 계획을 알려주세요"}, {"code": "N04", "group": "비계량", "cat": "건강", "sub": "", "name": "남편 건강 상태", "target": "남편", "unit": "", "goal": "1·3순위", "q": "현재 치료 중이거나 진단받은 질환이 있으신가요"}, {"code": "N05", "group": "비계량", "cat": "건강", "sub": "", "name": "모친 건강 상태·돌봄 필요", "target": "모친", "unit": "", "goal": "5순위", "q": "어머니 건강과 돌봄 필요 여부를 알려주세요"}, {"code": "N06", "group": "비계량", "cat": "가치관", "sub": "", "name": "목표 우선순위의 이유", "target": "부부", "unit": "", "goal": "전체", "q": "가장 먼저 지키고 싶은 것과 그 이유를 말씀해 주세요"}, {"code": "N07", "group": "비계량", "cat": "가치관", "sub": "", "name": "자녀 지원에 대한 생각", "target": "부부", "unit": "", "goal": "2·6·7순위", "q": "자녀 지원은 어디까지 하고 싶으신가요"}, {"code": "N08", "group": "비계량", "cat": "가치관", "sub": "", "name": "간병 방식에 대한 생각", "target": "남편", "unit": "", "goal": "3순위", "q": "간병을 직접 하실지 외부 도움을 받으실지"}, {"code": "N09", "group": "비계량", "cat": "가치관", "sub": "", "name": "노후 생활 모습", "target": "부부", "unit": "", "goal": "4순위", "q": "은퇴 후 어디서 어떻게 지내고 싶으신가요"}, {"code": "N10", "group": "비계량", "cat": "가치관", "sub": "", "name": "간병기 돌봄 방식", "target": "부부", "unit": "", "goal": "4순위", "q": "돌봄이 필요할 때 집·요양시설 중 어디를 원하시나요"}, {"code": "N11", "group": "비계량", "cat": "계획", "sub": "", "name": "은퇴 시기", "target": "남편", "unit": "", "goal": "4순위", "q": "언제까지 일하실 계획이세요"}, {"code": "N12", "group": "비계량", "cat": "계획", "sub": "", "name": "주택 처분·이사 의향", "target": "부부", "unit": "", "goal": "4순위", "q": "은퇴 후 집을 줄이거나 옮길 생각이 있으신가요"}, {"code": "N13", "group": "비계량", "cat": "계획", "sub": "", "name": "모친 부양 방식 의향", "target": "남편", "unit": "", "goal": "5순위", "q": "어머니를 모시고 살 계획이 있으신가요"}, {"code": "N14", "group": "비계량", "cat": "계획", "sub": "", "name": "상속·증여 의사", "target": "부부", "unit": "", "goal": "6·7순위", "q": "자녀에게 상속이나 증여는 생각 없으세요?"}, {"code": "N15", "group": "비계량", "cat": "위험 태도", "sub": "", "name": "투자 경험", "target": "부부", "unit": "", "goal": "1·4순위", "q": "지금까지 투자해 보신 상품을 알려주세요"}, {"code": "N16", "group": "비계량", "cat": "위험 태도", "sub": "", "name": "투자성향", "target": "부부", "unit": "", "goal": "4순위", "q": "원금 손실을 어느 정도까지 견딜 수 있으신가요"}, {"code": "N17", "group": "비계량", "cat": "위험 태도", "sub": "", "name": "금융상품 이해도", "target": "부부", "unit": "", "goal": "4순위", "q": "IRP·연금저축을 알고 계신가요"}, {"code": "N18", "group": "비계량", "cat": "위험 태도", "sub": "", "name": "보험에 대한 생각", "target": "부부", "unit": "", "goal": "1·3순위", "q": "보험을 추가로 들 생각이 있으신가요"}, {"code": "N19", "group": "비계량", "cat": "관계", "sub": "", "name": "재무설계 의뢰 동기", "target": "부부", "unit": "", "goal": "전체", "q": "오늘 상담을 받으시려는 이유"}, {"code": "N20", "group": "비계량", "cat": "관계", "sub": "", "name": "상담·점검 방식 선호", "target": "부부", "unit": "", "goal": "전체", "q": "얼마나 자주 어떤 방식으로 점검을 원하시나요"}];
-// 예시 고객: 같은 계산서의 사례(가상 고객) 값
+// 예시 고객(가상 고객)
 const EXAMPLE_INFO = {"K01": {"v": "남편 1970.8.28(만56) / 아내 1972.6.2(만54) / 아들 2010.9.28(만16) / 딸 2012.7.19(만14) / 모친 1947.6.29(만79) · 부친 사망", "t": "설정", "st": "확정"}, "K02": {"v": "남편 근로소득자 세전 연 7000(상여 연 400% 포함) / 아내 2026.9 퇴직(퇴직 전 세전 연 4500)", "t": "설정", "st": "확정"}, "K03": {"v": "자가 / 경기도 안양시 동안구 비산동 비산삼성래미안 전용 84.91㎡ / 조정대상지역·투기과열지구(2025.10.16)·토지거래허가구역(2025.10.20~2026.12.31)", "t": "설정", "st": "확정"}, "S01": {"v": "남편 300 / 아내 300 (합 600)", "t": "설정", "st": "확정"}, "S02": {"v": "평가액 3157.9 (원금 3000 · 연 3.4% · 2025.1.1~2027.1.1 만기일시지급)", "t": "계산", "st": "확정"}, "S03": {"v": "없음", "t": "설정", "st": "확정"}, "S04": {"v": "없음", "t": "설정", "st": "확정"}, "S05": {"v": "없음", "t": "설정", "st": "확정"}, "S06": {"v": "아내 퇴직 후 13,611.2 (2026.9 퇴직급여 IRP 이전 · 퇴직소득세 과세이연)", "t": "계산", "st": "확정"}, "S07": {"v": "ISA 개설하지 않음(5차 결정)", "t": "설정", "st": "확정"}, "S08": {"v": "시세 100000 / 공시가격 69000 / 취득가 60000 / 취득일 2020.3.2", "t": "설정", "st": "확정"}, "S09": {"v": "3500 (중고 시세)", "t": "설정", "st": "확정"}, "S10": {"v": "없음", "t": "설정", "st": "확정"}, "S11": {"v": "16655.2", "t": "계산", "st": "확정"}, "S12": {"v": "0 (실손보험만 보유)", "t": "설정", "st": "확정"}, "S13": {"v": "없음", "t": "설정", "st": "확정"}, "S14": {"v": "잔액 25321.6 (최초 30000 · 연 2.7% 고정 · 30년 원리금균등 · 2020.4 첫 상환 · 79회 납입)", "t": "계산", "st": "확정"}, "S15": {"v": "150 (일시불 · 이자 없음)", "t": "설정", "st": "확정"}, "S16": {"v": "남편 1997.9~2030.8(만 60세가 되는 달까지 납부, 1970.8.28생) / 아내 1995.3~2026.9(379개월) · 수급개시 둘 다 만65", "t": "계산", "st": "확정"}, "C01": {"v": "486.9", "t": "계산", "st": "확정"}, "C02": {"v": "0 (구직급여 미수령 가정 · 수급기간 연장 신고)", "t": "설정", "st": "확정"}, "C03": {"v": "정기 0 / 비정기: 2027.1.1 예금 세후이자 172.6", "t": "계산", "st": "확정"}, "C04": {"v": "57.0", "t": "계산", "st": "확정"}, "C05": {"v": "10", "t": "설정", "st": "확정"}, "C06": {"v": "20", "t": "설정", "st": "확정"}, "C07": {"v": "8.2", "t": "계산", "st": "확정"}, "C08": {"v": "5.8 (연 70)", "t": "설정", "st": "확정"}, "C09": {"v": "4.1 (연 49.4)", "t": "계산", "st": "확정"}, "C10": {"v": "50", "t": "설정", "st": "확정"}, "C11": {"v": "143", "t": "통계", "st": "확정"}, "C12": {"v": "교통 20 / 통신 15 / 여가 20", "t": "설정", "st": "확정"}, "C13": {"v": "아들 80(고1) / 딸 60(중2)", "t": "설정", "st": "확정"}, "C14": {"v": "각 30 (대학 입학 전까지)", "t": "설정", "st": "확정"}, "C15": {"v": "17.2 (급여 법정본인부담 2.3 + 비급여 14.8) · 키트루다(3주마다 420.1, 비급여)는 1순위 목적자금", "t": "계산", "st": "초안"}, "C16": {"v": "64.7", "t": "계산", "st": "확정"}, "R01": {"v": "4세대 실손만 가입(2024.1.2) · 사망·암진단 보장 없음 · 남편 계약분 남편이 계약자·수익자, 나머지는 아내가 계약자", "t": "설정", "st": "확정"}, "R02": {"v": "4세대 · 비급여 특약 연 5000(통원 회당 20) · 통원 자기부담 30%(최소 3만) · 5년 재가입(2029.1)", "t": "통계", "st": "확인필요"}, "R03": {"v": "없음", "t": "설정", "st": "확정"}, "R04": {"v": "없음", "t": "설정", "st": "확정"}, "P01": {"v": "DB형 · DC 전환 가능 · 정년연장형 임금피크(만60부터 매년 10%씩 감액)", "t": "설정", "st": "확정"}, "P02": {"v": "최대 3년(1년+연장 2년) · 사용 이력 없음", "t": "설정", "st": "확정"}, "P03": {"v": "13611.2", "t": "계산", "st": "초안"}, "T01": {"v": "433.6", "t": "계산", "st": "확정"}, "T02": {"v": "재산세 등 연 98.3 / 종부세 0", "t": "계산", "st": "확정"}, "T03": {"v": "남편 직장가입자 · 아내 2026.10 남편 피부양자 등록 · 자녀 피부양자", "t": "설정", "st": "확정"}, "E01": {"v": "확진 직후 등록(확진일 소급) · 급여 본인부담 5% · 5년", "t": "설정", "st": "확정"}, "E02": {"v": "지방 빌라 공시가격 15000(본인 명의, 별거) / 노인일자리 월 70 / 국민연금 월 69 / 기초연금 수급(연계감액 대상, 월 17.5~35.0)", "t": "계산", "st": "확정"}, "N01": {"v": "남편·아내·아들·딸 4인 동거 / 모친 지방 별거 / 부친 사망 / 처가 부모는 아내의 오빠가 부양", "t": "고객응답", "st": "확정"}, "N02": {"v": "가장인 남편이 결정", "t": "고객응답", "st": "확정"}, "N03": {"v": "조기 삼중음성유방암(2~3기) 2026.9 진단 · 2026.10.1부터 1차(수술 전 키트루다 + 항암화학요법 8회) 중 · 진단 시점 퇴직", "t": "고객응답", "st": "확정"}, "N04": {"v": "고혈압 · 음주·흡연 안 함", "t": "고객응답", "st": "확정"}, "N05": {"v": "저혈압 · 돌봄 필요 없음 · 노인일자리 근무 중", "t": "고객응답", "st": "확정"}, "N06": {"v": "가족의 건강 / 돈에 얽매여 가족들이 하고 싶은 걸 하지 못하는 걸 보기 싫음(자녀 용돈·대학자금 마련 이유)", "t": "고객응답", "st": "확정"}, "N07": {"v": "학비·취업 전 용돈 / 비과세로 증여 가능할 때 한 번씩 / 상속 니즈 있음", "t": "고객응답", "st": "확정"}, "N08": {"v": "아내 간병을 직접 하고 싶음 · 가족돌봄 근로시간 단축으로 근무를 일부 줄이고 임금 일부를 받으며 간병", "t": "고객응답", "st": "확정"}, "N09": {"v": "자녀 독립 후 다운사이징한 집에서 아내와 거주 · 취미 조경·등산", "t": "고객응답", "st": "확정"}, "N10": {"v": "집(재가 돌봄)", "t": "고객응답", "st": "확정"}, "N11": {"v": "만 65세(2035.8) 퇴직 · 정년연장형 임금피크", "t": "고객응답", "st": "확정"}, "N12": {"v": "다운사이징을 통한 이사 예정", "t": "고객응답", "st": "확정"}, "N13": {"v": "모시고 살 의향 없음 · 현재 월 50 송금 유지", "t": "고객응답", "st": "확정"}, "N14": {"v": "있음 · 자녀 결혼 시 각 1억 증여 · 상속 시 각 1억 희망", "t": "고객응답", "st": "확정"}, "N15": {"v": "예금 위주 · 과거 주식 조금 해봄 · 펀드 경험 없음", "t": "고객응답", "st": "확정"}, "N16": {"v": "안정추구형 · 원금손실 10%까지 감내", "t": "고객응답", "st": "확정"}, "N17": {"v": "과거 주식만 조금 해봄 · IRP·연금저축 잘 모름", "t": "고객응답", "st": "확정"}, "N18": {"v": "현재 실손만 보유 · 보험에 대한 생각은 크게 없음", "t": "고객응답", "st": "확정"}, "N19": {"v": "니즈를 순서대로 밝힘 · 가장 큰 이유는 아내 암 치료가 2차까지 갈 때 비급여 부담", "t": "고객응답", "st": "확정"}, "N20": {"v": "오프라인 대면 상담 · 연 1회 점검", "t": "고객응답", "st": "확정"}};
 const EXAMPLE = {
   members: [
@@ -1126,8 +1126,8 @@ const EXAMPLE = {
     { name: "4세대 실손(보험료는 위 보험료 칸에 포함)", kind: "실손", insured: "본인", prem: "", death: "", contractor: "피보험자", benef: "배우자·상속인" },
     { name: "4세대 실손(보험료는 위 보험료 칸에 포함)", kind: "실손", insured: "배우자", prem: "", death: "", contractor: "피보험자", benef: "배우자·상속인" },
   ],
-  // 보고서 3-1 가. 은퇴 단계별 생활비(2026년 가치)
-  retire: { active: 319.5263, retroFrom: 70, retro: 312.5778, careFrom: 75, care: 350.2713, single: 244.8903 }, // 보고서 계산서 값(소수 넷째 자리)
+  // 3-1 가. 은퇴 단계별 생활비(2026년 가치)
+  retire: { active: 319.5263, retroFrom: 70, retro: 312.5778, careFrom: 75, care: 350.2713, single: 244.8903 },
   expense: {
     living: 0, insurance: 3.0363, mode: "items", carReg: 2024,
     items: [
@@ -1200,11 +1200,11 @@ const EXAMPLE = {
   },
   altGoal: { dep: "g1", draw: "g1", silson: "g1", medc: "g1", ui: "g1", credit: "g1", cut: "g1", ds: "g2", educ: "g2", scholar: "g2", care: "g3", leave: "g3", dc: "g4", irp: "g4", vol: "g4", wvol: "g4", defer: "g4", psa: "g4", lv: "g4", hp: "g4", mom: "g5", split: "legacy", dIns: "legacy", gift: "g7" },
   altOrder: ["draw", "u_silson5", "u_term", "u_cancer", "care", "ds", "dc", "irp", "vol", "wvol", "defer", "psa", "split", "gift", "lv"], altMetric: "child",
-  // B표 메모: 숫자는 D표(그 대안만 뺐을 때 상속 순수령), 이유는 보고서 4-1·4-3에 적힌 내용
+  // B표 메모: 숫자는 D표(그 대안만 뺐을 때 상속 순수령)
   altMemo: {"draw": "빼면 자녀 순수령 +29,475이지만 2026년부터 유동성 마이너스(기준 2 위반) · 정기예금 만기금과 아내 IRP 저율 인출(부득이한 인출·55세 후 의료비 인출)로 치료비 마련", "dep": "정기예금 만기금(2027.1)을 1순위 치료비 재원으로 씀(아내 IRP 저율 인출과 함께 채택)", "care": "빼면 +2,427이지만 3순위(직접 간병) 목표를 이루는 방식이라 유지(기준 3) · 고객: 휴직이 아닌 근로시간 단축으로 남편이 직접 간병", "ds": "빼면 −21,291, 2032년부터 유동성 마이너스 · 시점 2031.3은 '자녀 독립 후 작은 집' 희망(기준 4)과 딸 고교 졸업(2031.2) 직후, 60세 요건·매각 직전 비상예비자금 조건 안에서 고름 · 같은 동 84㎡ 6억 원 수준 주택", "dc": "빼면 −23,933, 2061년부터 유동성 마이너스 · 임금피크 직전(2030.8.31) 전환으로 줄어드는 퇴직급여를 막음", "irp": "일시금이면 −238 · 종신 노후소득을 우선(기준 3)", "vol": "빼면 −313 · 남편 임의계속가입(2030.9~2035.8)", "wvol": "빼면 −2,045 · 아내 임의가입(기준소득월액 101.3)", "defer": "연기 없음이면 +1,709 · 종신 지급액 +21.6%로 예상보다 오래 사는 위험에 대비해 4순위(노후)를 7순위(증여)보다 먼저(기준 3·6) · 4-3에서 부부가 장수 대비를 선택", "psa": "빼면 −4,377 · 2031년 주택차액 1억 + 600 납입", "split": "배우자 전부 상속이면 −14,656 · 배우자는 법정상속분(3/7)까지, 나머지 주택 지분은 자녀 — 1차 세금은 같고 2차 상속재산만 줄어듦", "gift": "1억씩이면 자녀 순수령 72,042(6순위 90.1%) · 보험료 반영 뒤 6순위를 지키는 최대 5,000으로 조정 · 4-3에서 부부가 '집을 물려주는 것이 더 중요'하다며 선택, 2044년에 다시 봄", "lv": "필요할 때만 인출이면 +2,048 · 남편 사망 뒤 2059~2062년 아내 사적연금이 연 1,500만 원을 넘어 종합과세 또는 16.5% 분리과세가 생기므로 균등 수령, 수익률 가정이 낮으면 균등 수령이 유리(기준 6)", "silson": "4세대 실손 유지·청구(통원 회당 20만 원)로 치료비 순부담을 줄임", "medc": "2027 귀속 연말정산 의료비 세액공제(실손 수령액 차감)", "credit": "이자 비용만 생김(기준 5)", "cut": "지출이 통계 평균 수준(기준 4)", "leave": "고객: 휴직이 아닌 가족돌봄 근로시간 단축으로 직접 간병", "dIns": "자녀 계약자 사망보험 방식은 제외(2단계 수집 때 판단)", "tIns": "정기보험은 기간을 정해 '남편 정기보험 사망 3억 원' 대안으로 넣음(2026.12~2036.11)", "mom": "모친과 같이 살 생각은 없고 월 50 송금 유지(고객 응답)", "u_silson5": "빼면 −116 · 2029.1 재가입 때 어차피 5세대가 되므로 지금 전환해 2027~2028년 보험료를 줄이고 중증 입원 자기부담 상한을 얻음 · 키트루다(중증 비급여 통원) 보상은 4·5세대 같음", "u_term": "빼면 +1,829(위험 전가 비용) · 남편 사망 시 필요보장액 28,543(장례비 + 대출 + 교육비 − 사망 퇴직급여)을 1억 단위로 올려 3억, 대출 상환과 자녀 독립까지 10년 · 고혈압은 청약 때 고지", "u_cancer": "빼면 +309(위험 전가 비용) · 재발 위험이 큰 시기가 지난 2030.1(마지막 치료 + 2년)에 가입 · 암 경험자라 간편가입 60세 공시 보험료(월 12,012원)로 보수적으로 넣음"},
   altJudge: { dep: "채택", silson: "채택", medc: "채택", educ: "채택", ui: "실행만", credit: "미채택", cut: "미채택", scholar: "검토 보류", leave: "미채택", hp: "미채택", dIns: "미채택", tIns: "미채택", mom: "유지" },
   house: { owner: "본인", buyPrice: 60000, buyDate: "2020-03", oneHouse: true },
-  // 보고서 4단계 최종안
+  // 4단계 최종안
   sw: { draw: 1, bdExtra: 818, care: 1, ds: 1, dsY: 2031, dsM: 3, dsNewPV: 60000, dc: 1, dcAt: "2030-08", irp: 1, vol: 1, wvol: 1, wvolBase: 101.3, defer: 3, psa: 1, psaCap: 10000, psaReg: 600, psaFrom: 2031, psaTo: 2031, lv: 1, lvFrom: 2040, lvTo: 2063, split: 1, giftOn: 1, giftEach: 5000, customOn: { silson5: 1, term: 1, cancer: 1 } },
   customAlts: [
     { id: "silson5", name: "가족 실손 5세대 계약전환(2026.12 신청, 월 99,551원 → 75,147원)", kind: "월 지출", amount: -2.4853, from: "2027-01", to: "2028-12", infl: true, law: "실손의료보험 표준약관" },
@@ -1623,7 +1623,7 @@ function normalizeRaw(s) {
 }
 
 // extraMonthly: 은퇴 전까지 추가로 줄이는 월 지출(현재가치, 만원)
-// ───────────────────── 월 단위 계산 엔진 (통합계산서 CF 시트 방식) ─────────────────────
+// ───────────────────── 월 단위 계산 엔진 ─────────────────────
 // 기준일 다음 달부터 월 단위로 계산하고 연도별로 묶어 보여 줌. 세금·사회보험·국민연금·퇴직급여·연금계좌 인출·다운사이징·상속을 포함.
 // 법령 수치는 아래 LAW에 모아 두고, 사례·팀 결정 값은 추정 기준(assumptions.json)에서 읽음.
 const LAW = {
@@ -1680,7 +1680,7 @@ function npBasic(m, E) {
   const [sy, sm] = m.npStart, endIdx = m.npEndIdx; // 가입 끝(연·월 인덱스)
   const g0 = m.npIncome; // 2026년 기준 연 소득(세전)
   let P = 0, sumB = 0, incAfter = 0; const byYear = {};
-  // 근로시간 단축(대안 care)이 있던 해의 소득은 다음 해 7월~그다음 해 6월 기준소득월액에 반영(그해 실제 받은 연봉 ÷ 12, 보고서 계산서 국민연금 시트와 같음)
+  // 근로시간 단축(대안 care)이 있던 해의 소득은 다음 해 7월~그다음 해 6월 기준소득월액에 반영(그해 실제 받은 연봉 ÷ 12)
   const lagInc = {};
   if (E.careOn && m.careFrom != null && m.wageAt) {
     for (let yc = Math.floor(m.careFrom / 12); yc <= Math.floor(m.careTo / 12); yc++) {
@@ -1692,7 +1692,7 @@ function npBasic(m, E) {
     const y = Math.floor(idx / 12);
     if (m.retireIdx != null && m.npVolFromIdx != null && idx >= m.retireIdx && idx < m.npVolFromIdx) continue; // 퇴직 뒤 임의가입 전까지는 가입 공백
     let inc;
-    if (m.npVolBase != null && idx >= m.npVolFromIdx) inc = m.npVolWage && m.wageAt ? (g0 / 12) * (m.wageAt(idx) / Math.max(1e-9, m.wageAt(m.npVolFromIdx - 1))) : m.npVolBase; // 임의계속가입 기간 소득(현재가치): 지금 연봉 × 임금피크 비율(보고서 계산서 국민연금 시트와 같음)
+    if (m.npVolBase != null && idx >= m.npVolFromIdx) inc = m.npVolWage && m.wageAt ? (g0 / 12) * (m.wageAt(idx) / Math.max(1e-9, m.wageAt(m.npVolFromIdx - 1))) : m.npVolBase; // 임의계속가입 기간 소득(현재가치): 지금 연봉 × 임금피크 비율
     else if (lagInc[idx] != null) inc = lagInc[idx];
     else inc = y < E.startY ? (g0 / Math.pow(1 + npPastGrowth(), E.startY - y)) / 12 * (LAW.reval[y] ?? 1) : g0 / 12; // 과거는 역산 후 재평가, 이후는 현재가치 유지
     inc = Math.min(LAW.npCap * (y < E.startY ? (LAW.reval[y] ?? 1) : 1), Math.max(LAW.npFloor, inc));
@@ -1709,7 +1709,7 @@ function npBasic(m, E) {
   basic *= 1 + (0.05 * n) / 12;
   // 가입기간 10년 이상 20년 미만: 기본연금액의 50% + 10년 넘는 1개월마다 5/12%(국민연금법 §63①2, 국민연금공단 노령연금 안내 '가입기간 10년 50%(1개월마다 5/12% 증가)', 2026-11-14 확인)
   if (P < 240) basic *= 0.5 + ((P - 120) * 0.05) / 12;
-  const after2002 = sumB > 0 ? incAfter / sumB : 0; // 과세 대상 비율: 2002년 이후 가입분의 재평가 소득 비중(통합계산서 국민연금 시트)
+  const after2002 = sumB > 0 ? incAfter / sumB : 0; // 과세 대상 비율: 2002년 이후 가입분의 재평가 소득 비중
   return { monthly: basic / 12, P, B, taxRatio: after2002 };
 }
 
@@ -1753,7 +1753,7 @@ function runEngine(p, extraMonthly = 0) {
     const legal = 1.5 / (1.5 + E.childCount);
         const spouseGets = sw.split ? Math.min(estate, estate * legal) : estate;
         const insE1 = inh.insEstate?.[pp.key] || 0; // 간주상속재산(계약자 = 피상속인, 수익자 = 자녀)
-        const tax = estate + insE1 > 0 ? inheritTax(estate + insE1, spouseGets, legal, Math.max(0, finPart + own + insE1 - debt1), funeral, 0) /* 금융재산공제는 순금융재산(마이너스 유동성 = 금융채무 차감) 기준 — 통합계산서와 같음 */ : 0;
+        const tax = estate + insE1 > 0 ? inheritTax(estate + insE1, spouseGets, legal, Math.max(0, finPart + own + insE1 - debt1), funeral, 0) /* 금융재산공제는 순금융재산(마이너스 유동성 = 금융채무 차감) 기준 */ : 0;
         inh.tax1 = tax; inh.year1 = y; inh.death1Idx = dIdx; inh.estate1 = estate;
         const childPart = estate - spouseGets;
         inh.childFromFirst = childPart; inh.spouseHouse = E.houseOwner === pp.key ? (sw.split ? Math.min(1, Math.max(0, (spouseGets - finPart - own - dep - propV) / Math.max(1, houseShare))) : 1) : inh.spouseHouse;
@@ -1787,10 +1787,10 @@ function runEngine(p, extraMonthly = 0) {
     const acq = houseShare * houseOfficialRatio * 0.0296 + acqProps;
     const acq1 = (inh.acqChild || 0) * (inh.acqChildIdx != null ? Math.pow(1 + E.cashRate, Math.floor(dIdx / 12) - Math.floor(inh.acqChildIdx / 12)) : 1); // 1차 때 자녀가 낸 취득세(그동안의 기회비용 포함)
     const extra = (inh.extras || []).reduce((t, x) => t + x.amt * Math.pow(1 + E.cashRate, Math.max(0, dIdx - x.idx) / 12), 0); // 자녀가 받은 사망보험금(운용 포함)
-    // 자녀가 연금계좌 잔액을 꺼낼 때 내는 소득세(사망 = 부득이한 인출, 연금소득 과세): 이연퇴직소득은 퇴직소득세 × 70/60/50%(수령 연차), 과세분은 3.3~5.5% — 통합계산서 CF E78
+    // 자녀가 연금계좌 잔액을 꺼낼 때 내는 소득세(사망 = 부득이한 인출, 연금소득 과세): 이연퇴직소득은 퇴직소득세 × 70/60/50%(수령 연차), 과세분은 3.3~5.5%
     const dAge = pp.ageAt(dIdx), ar = dAge < 70 ? 0.055 : dAge < 80 ? 0.044 : 0.033;
     const heirsTax = accts.filter((a) => a.type !== "DB" && (a.owner === "본인" ? "self" : "spouse") === pp.key).reduce((t, a) => {
-      const yrs = redYear(a, y), red = yrs <= 10 ? 0.7 : yrs <= 20 ? 0.6 : 0.5; // 수령연차: 인출 때와 같은 셈(계산서 상속 E78)
+      const yrs = redYear(a, y), red = yrs <= 10 ? 0.7 : yrs <= 20 ? 0.6 : 0.5; // 수령연차: 인출 때와 같은 셈
       return t + a.def * (a.defBase > 0 ? (a.defTax0 * 1.1) / a.defBase : 0) * red + a.tax * ar;
     }, 0);
     inh.heirsTax = heirsTax; Object.assign(inh, { estate2: estate, own2: own, liq2: liquid, house2: houseShare, credit2: credit, acq2: acq, acq1fv: acq1, funeralCash2: funeralCash, extra2: extra }); // 2차 상속 내역(점검용)
@@ -1816,13 +1816,13 @@ function runEngine(p, extraMonthly = 0) {
     const br = n >= 3 ? [[30000, 0.005], [60000, 0.007], [120000, 0.01], [250000, 0.02], [500000, 0.03], [940000, 0.04], [Infinity, 0.05]] : [[30000, 0.005], [60000, 0.007], [120000, 0.01], [250000, 0.013], [500000, 0.015], [940000, 0.02], [Infinity, 0.027]];
     let t = 0, lo = 0; for (const [hi, r] of br) { if (base > lo) t += (Math.min(base, hi) - lo) * r; lo = hi; } return t * 1.2;
   };
-  const yellowBal = {}; // 노란우산공제 적립금(연 이율은 예금 금리로 — 임의 설정)
+  const yellowBal = {}; // 노란우산공제 적립금(연 이율은 예금 금리로 — 페이지 기준)
   let leaseEnded = false;
   let depositBal = E.lease ? E.lease.deposit : 0, rentNow = E.lease ? E.lease.rent : 0; // 임차보증금(돌려받을 돈, 수익 없음)·월세
   let otherHeld = (E.others || []).reduce((t, o) => t + (o.atIdx != null && o.atIdx < start ? 0 : o.amount), 0); // 기타자산: 받기 전까지 순자산에만
   const newYear = (y) => ({ year: y, months: 0, earn: 0, gross: 0, social: 0, incTax: 0, pension: 0, npGross: 0, other: 0, lump: 0, contribOut: 0, living: 0, insurance: 0, loanPay: 0, interest: 0, principal: 0, goalOut: 0, propTax: 0, withdraw: 0, wTax: 0, ret: 0, extra: 0, events: [], medical: 0, eduUni: 0, privByPerson: {}, careLoss: 0, gift: 0, giftTax: 0, ds: 0, inhTax: 0, npContrib: 0 });
-  // DC 부담금: 그해 낸 부담금 합계를 납입 기간 가운데에 낸 것으로 보고 (1 + 수익률)^(납입 개월 ÷ 24)만큼 불려 더함(보고서 계산서 퇴직급여 시트 G열)
-  // 대안 연금저축은 기준일 다음 달 개설로 봄 → 연금수령연차 1년차 = 가입 5년이 지나는 해(시행령 §40의2④, 보고서 계산서 p_psa_y1)
+  // DC 부담금: 그해 낸 부담금 합계를 납입 기간 가운데에 낸 것으로 보고 (1 + 수익률)^(납입 개월 ÷ 24)만큼 불려 더함
+  // 대안 연금저축은 기준일 다음 달 개설로 봄 → 연금수령연차 1년차 = 가입 5년이 지나는 해(시행령 §40의2④)
   const psaY1 = Math.floor((start + 60) / 12);
   const dcFlush = (ac) => { if (ac.dcAcc) { ac.tax += ac.dcAcc * Math.pow(1 + ac.r, ac.dcN / 24); ac.dcAcc = 0; ac.dcN = 0; } };
   const flush = () => {
@@ -1867,7 +1867,7 @@ function runEngine(p, extraMonthly = 0) {
         const pens = Math.min(900, Math.min(600, pc.psa + sumK("psaPay") + (self ? Y.psaContrib || 0 : 0)) + pc.irp + sumK("irpPay")) * r;
         const usedPen = Math.min(settled, pens);
         settled = Math.max(0, settled - usedPen);
-        // 대안 연금저축 납입 중 세액공제를 실제로 받은 금액만 나중에 과세, 나머지(결정세액이 없어 공제를 못 받은 몫)는 과세제외 원금(보고서 계산서 CE·DK열)
+        // 대안 연금저축 납입 중 세액공제를 실제로 받은 금액만 나중에 과세, 나머지(결정세액이 없어 공제를 못 받은 몫)는 과세제외 원금
         if (self && (Y.psaContrib || 0) > 0) {
           const credited = Math.min(Y.psaContrib, usedPen / r), lost = Y.psaContrib - credited, ac = accts.find((a) => a.psaAlt && a.owner === "본인");
           if (lost > 1e-9 && ac) { const mv = Math.min(lost, ac.tax); ac.tax -= mv; ac.exempt += mv; }
@@ -1899,31 +1899,31 @@ function runEngine(p, extraMonthly = 0) {
       const pubOf = (k) => (Y.npTaxBy?.[k] || 0) * ((people.find((x) => x.key === k) || {}).npTaxRatio ?? 0.9);
       const pub = pubOf(pp.key);
       if (pub > 0 && !(Y.grossBy?.[pp.key])) {
-        // 인적공제: 본인 150 + 배우자 150(배우자가 근로소득 없고 연금소득금액 100만 이하) + 경로우대 100(70세 이상) — 통합계산서 CN·CS열
+        // 인적공제: 본인 150 + 배우자 150(배우자가 근로소득 없고 연금소득금액 100만 이하) + 경로우대 100(70세 이상)
         const oth = people.find((x) => x !== pp), othPub = oth ? pubOf(oth.key) : 0;
-        const spDep = pp.key === "self" /* 보고서 계산서 방식: 연금소득세의 배우자공제는 본인 쪽에서만(배우자가 본인을 공제받는 경우는 계산하지 않음) */ && oth && oth.aliveIdx(Y.year * 12) && !(Y.grossBy?.[oth.key]) && othPub - pensionDeduction(othPub) <= 100 ? 150 : 0;
+        const spDep = pp.key === "self" /* 연금소득세의 배우자공제는 본인 쪽에서만(배우자가 본인을 공제받는 경우는 계산하지 않음) */ && oth && oth.aliveIdx(Y.year * 12) && !(Y.grossBy?.[oth.key]) && othPub - pensionDeduction(othPub) <= 100 ? 150 : 0;
         const old = pp.ageAt(Y.year * 12 + 11) >= 70 ? 100 : 0;
         const base = Math.max(0, pub - pensionDeduction(pub) - 150 - spDep - old);
         const t = Math.max(0, progressive(base, LAW.incomeTax) - 7) * 1.1;
         Y.incTax += t; liquid -= t;
       } else if (pub > 0 && Y.taxCalc?.[pp.key]) {
-        // 근로소득과 공적연금을 같은 해에 받으면 합산과세: 연금소득금액만큼 과세표준이 늘어난 세금 차이를 냄(보고서 계산서 CP열)
+        // 근로소득과 공적연금을 같은 해에 받으면 합산과세: 연금소득금액만큼 과세표준이 늘어난 세금 차이를 냄
         const tc = Y.taxCalc[pp.key], t = Math.max(0, progressive(tc.base + Math.max(0, pub - pensionDeduction(pub)), LAW.incomeTax) - progressive(tc.base, LAW.incomeTax)) * 1.1; // 근로소득세액공제는 근로소득분에만 적용되므로 늘어난 산출세액을 그대로 더함
         Y.incTax += t; liquid -= t;
       }
     }
-    // ── 유동성 수익: 연초 잔액은 그해 개월 수만큼, 그해 들어오고 나간 돈은 그 절반만큼(연중 고르게 발생한다고 봄) — 보고서 계산서 DC·DD열과 같은 방식. 인출액은 연말에 들어와 수익 없음 ──
+    // ── 유동성 수익: 연초 잔액은 그해 개월 수만큼, 그해 들어오고 나간 돈은 그 절반만큼(연중 고르게 발생한다고 봄). 인출액은 연말에 들어와 수익 없음 ──
     { const gr = (x, mm) => Math.pow(1 + (x >= 0 ? liqRate : E.debtRate), mm / 12) - 1, m = Y.months, flow = liquid - Y.liq0;
       const r = Y.liq0 * gr(Y.liq0, m) + flow * gr(flow, m / 2); Y.ret += r; liquid += r; }
     // ── 비상예비자금 인출 규칙(대안: draw) ──
-    // 정기 지출(통합계산서 DA): 원천징수 세금(전년 환급 전), 임의(계속)가입 보험료 포함
+    // 정기 지출: 원천징수 세금(전년 환급 전), 임의(계속)가입 보험료 포함
     const regular = (Y.living + Y.insurance + Y.interest + Y.propTax + Y.social + Y.npContrib + Y.incTax + (Y.refundIn || 0) + Y.principal) / Math.max(1, Y.months);
     const buffer = regular * E.bufferMonths;
     // 본인 IRP 균등 수령(대안: lv): 잔액 ÷ 남은 연수(세전)를 먼저 받고, 그래도 모자라면 인출 규칙
-    // 균등 수령은 연금계좌 인출 규칙의 한 부분(보고서 계산서: 인출 규칙을 끄면 IRP 인출 없음, EJ열)
+    // 균등 수령은 연금계좌 인출 규칙의 한 부분(인출 규칙을 끄면 IRP 인출 없음)
     if (sw.lv && sw.draw && Y.year >= sw.lvFrom && Y.year <= sw.lvTo) for (const ac of accts) if ((ac.owner === (sw.lvWho || "본인") || (ac.fromSelf && (sw.lvWho || "본인") === "본인")) && ac.type === "IRP" && ac.started === false) { const oAge = ac.owner === "본인" ? age : sAge; if (oAge == null || oAge < 55) continue; const left = Math.max(1, sw.lvTo - Y.year + 1); const amt = (ac.exempt + ac.def + ac.tax) / left; if (amt > 0) withdrawFrom(ac, amt, oAge, true); } // 배우자가 승계한 뒤에도 이어서
     if (sw.draw && liquid < buffer) drawDown(buffer - liquid, age, sAge);
-    // 배우자가 연금외수령한 퇴직소득이 100만 원을 넘으면 그해 배우자 기본공제(150)를 잃음 → 다음 해 환급에서 뺌(소득세법 §50①2, 보고서 계산서 HC열)
+    // 배우자가 연금외수령한 퇴직소득이 100만 원을 넘으면 그해 배우자 기본공제(150)를 잃음 → 다음 해 환급에서 뺌(소득세법 §50①2)
     for (const pp of people) {
       const tc = Y.taxCalc?.[pp.key], oth = people.find((x) => x !== pp);
       if (!tc || !oth || Y.grossBy?.[oth.key] || !((Y.defOutBy?.[oth.key] || 0) > 100)) continue; // 배우자가 일하던 해는 원래 공제 대상 아님
@@ -1962,8 +1962,8 @@ function runEngine(p, extraMonthly = 0) {
   }
   // 연금계좌 공통 규칙 — 이연퇴직소득세 감면: 실제 수령 10년 이하 70%·20년 이하 60%·넘으면 50%(소득세법 §129①5의3)
   // 연금수령한도: 연초 평가액 × 1.2 ÷ (11 − 기산연차), 11년차부터 한도 없음(소득세법 시행령 §40의2). 한도를 넘으면 연금외수령(이연퇴직소득세 100%, 운용수익 16.5%)
-  // 수령연차(보고서 계산서와 같게 해마다 셈): 퇴직 때 옮긴 IRP는 옮긴 다음 해가 1년차(그해도 1년차), 기준일에 이미 있던 계좌는 기준 연도가 1년차(계산서 EC·EM열)
-  // 사적연금 1,500만 원·세율을 따지는 사람: 승계한 계좌도 물려준 사람이 떠난 해까지는 그 사람 몫(계산서: 사망한 해는 생존 개월 > 0이라 부부 각자 계산)
+  // 수령연차(해마다 셈): 퇴직 때 옮긴 IRP는 옮긴 다음 해가 1년차(그해도 1년차), 기준일에 이미 있던 계좌는 기준 연도가 1년차
+  // 사적연금 1,500만 원·세율을 따지는 사람: 승계한 계좌도 물려준 사람이 떠난 해까지는 그 사람 몫(사망한 해는 생존 개월 > 0이라 부부 각자 계산)
   const keyOf = (ac) => {
     const k = ac.owner === "본인" ? "self" : "spouse";
     if (ac.fromKey && ac.fromKey !== k) { const d = people.find((x) => x.key === ac.fromKey); if (d && Math.floor(d.deathIdx / 12) === Y.year) return ac.fromKey; }
@@ -1976,7 +1976,7 @@ function runEngine(p, extraMonthly = 0) {
     if (ac.limY !== Y.year) {
       ac.limY = Y.year;
       const o = people.find((x) => x.key === (ac.owner === "본인" ? "self" : "spouse"));
-      const y55 = o ? Math.floor((o.birthIdx + 55 * 12) / 12) : E.startY; // 55세가 되는 해부터 1년차(보고서 계산서 EA열: 2027 = 1년차)
+      const y55 = o ? Math.floor((o.birthIdx + 55 * 12) / 12) : E.startY; // 55세가 되는 해부터 1년차(2027 = 1년차)
       const k = Y.year - Math.max(ac.psaY1 ?? ac.openY ?? E.startY, y55) + 1;
       // 55세 이후 의료비 인출(의료비연금계좌)은 한도 계산에서 뺌
       ac.limLeft = (k < 1 ? 0 : k >= 11 ? Infinity : ((ac.boy ?? ac.exempt + ac.def + ac.tax) * 1.2) / (11 - k)) + (Y.medical || 0);
@@ -1989,7 +1989,7 @@ function runEngine(p, extraMonthly = 0) {
     const medLimit = Y.medical > 0 ? Y.medical + 200 + (Y.year === E.startY ? num(sw.bdExtra) : 0) : 0;
     const ok = (ac) => ac.type !== "DB" && ac.type !== "DC" && ownerAge(ac) != null;
     const under55 = (ac) => ownerAge(ac) < 55;
-    const capGross = (ac) => (under55(ac) ? Math.max(0, medLimit - (Y.medDrawn || 0)) : Infinity); // 55세 전 부득이한 인출 한도는 세전 인출액 기준(보고서 계산서 EA열)
+    const capGross = (ac) => (under55(ac) ? Math.max(0, medLimit - (Y.medDrawn || 0)) : Infinity); // 55세 전 부득이한 인출 한도는 세전 인출액 기준
     const pull = (ac, part, rate, need, limGross = Infinity, countLim = false) => {
       if (need <= 0 || ac[part] <= 0) return 0;
       const gross = Math.min(ac[part], need / (1 - rate), capGross(ac), limGross);
@@ -2002,29 +2002,29 @@ function runEngine(p, extraMonthly = 0) {
       return net;
     };
     const lim = (ac) => (under55(ac) ? Infinity : Math.max(0, limLeft(ac)));
-    // 대안 연금저축(기준일 다음 달 개설로 봄): 과세분은 연금 개시 뒤에만 — 개시 = 본인 은퇴 다음 달(그 전까지 납입), 가입 5년·55세 이후(시행령 §40의2) · 과세제외 원금은 언제든(보고서 계산서 DM·DY열)
+    // 대안 연금저축(기준일 다음 달 개설로 봄): 과세분은 연금 개시 뒤에만 — 개시 = 본인 은퇴 다음 달(그 전까지 납입), 가입 5년·55세 이후(시행령 §40의2) · 과세제외 원금은 언제든
     const meP = people.find((x) => x.key === "self"), psaStart = Math.max(meP.retireIdx, E.startY * 12 + E.startM - 1 + 60, meP.birthIdx + 55 * 12);
     const taxOK = (ac) => !(ac.psaAlt && Y.year * 12 + 11 < psaStart);
     const list = accts.filter(ok);
-    // 과세제외 원금은 한도와 관계없이 꺼낼 수 있지만, 꺼낸 만큼 그해 한도를 씀(보고서 계산서 FK열)
+    // 과세제외 원금은 한도와 관계없이 꺼낼 수 있지만, 꺼낸 만큼 그해 한도를 씀
     for (const ac of list.filter((x) => x.exempt > 0)) { const g = pull(ac, "exempt", 0, shortfall); if (!under55(ac)) ac.limLeft = limLeft(ac) - g; shortfall -= g; }
-    // 이연퇴직소득: 배우자 몫(한도 안 → 한도 밖) → 본인 몫(한도 안 → 한도 밖) 순서(보고서 4-1 "아내·남편 이연퇴직소득", 계산서 인출 구간 ②~⑤)
+    // 이연퇴직소득: 배우자 몫(한도 안 → 한도 밖) → 본인 몫(한도 안 → 한도 밖) 순서
     const cands = [], who = (ac) => (ac.type !== "연금저축" && (ac.owner === "본인" || ac.fromSelf) ? 1 : 0);
     for (const ac of list.filter((x) => x.def > 0)) { const t = defTaxRate(ac); cands.push({ ac, rate: t * redOf(ac), inL: true }); if (!under55(ac)) cands.push({ ac, rate: t, inL: false }); }
     cands.sort((a, b) => who(a.ac) - who(b.ac) || (a.inL === b.inL ? a.rate - b.rate : a.inL ? -1 : 1));
     for (const c of cands) shortfall -= pull(c.ac, "def", Math.min(0.99, c.rate), shortfall, c.inL ? lim(c.ac) : Infinity, c.inL);
     const ageRate = (ac) => (ownerAge(ac) < 70 ? 0.055 : ownerAge(ac) < 80 ? 0.044 : 0.033);
-    // 계좌 순서(보고서 계산서 인출 구간 ⑥~⑱): 본인 몫 IRP(승계분 포함)·연금저축·배우자 몫 IRP — 단계마다 순서가 다름
+    // 계좌 순서: 본인 몫 IRP(승계분 포함)·연금저축·배우자 몫 IRP — 단계마다 순서가 다름
     const orig = (ac) => (ac.type === "연금저축" ? "psa" : ac.owner === "본인" || ac.fromSelf ? "h" : "w");
     const by = (o) => (x, y) => o[orig(x)] - o[orig(y)];
     for (const ac of list.filter((x) => x.tax > 0 && taxOK(x)).sort((x, y) => ageRate(x) - ageRate(y) || by({ h: 0, psa: 1, w: 2 })(x, y))) {
       const key = keyOf(ac), room = Math.max(0, LAW.privLimit - (Y.privByPerson[key] || 0));
       if (room > 0) { const keep = ac.tax; ac.tax = Math.min(ac.tax, room); const got = pull(ac, "tax", ageRate(ac), shortfall, lim(ac), true); const used = Math.min(keep, room) - ac.tax; ac.tax = keep - used; Y.privByPerson[key] = (Y.privByPerson[key] || 0) + used; shortfall -= got; }
     }
-    // ④ 연금수령한도 밖 과세분: 연금외수령(기타소득 16.5%) — 사적연금 1,500만 원 계산에 넣지 않음(보고서 계산서 ⑨~⑪)
+    // ④ 연금수령한도 밖 과세분: 연금외수령(기타소득 16.5%) — 사적연금 1,500만 원 계산에 넣지 않음
     for (const ac of list.filter((x) => x.tax > 0 && taxOK(x) && !under55(x)).sort(by({ psa: 0, w: 1, h: 2 }))) { const out = Math.max(0, ac.tax - lim(ac)); if (out > 0) shortfall -= pull(ac, "tax", 0.165, shortfall, out); }
     // ⑤ 그래도 모자라면 그 사람의 사적연금이 연 1,500만 원을 넘음 → 그해 사적연금 전액을 16.5%(분리과세)로: 이미 낸 3.3~5.5%와의 차액을 더 냄
-    //    부부가 모두 살아 있으면 배우자 쪽을 먼저 넘김(소득세법 §14③9 · 보고서 계산서 ⑫~⑮·추가세 GW열)
+    //    부부가 모두 살아 있으면 배우자 쪽을 먼저 넘김(소득세법 §14③9)
     for (const key of ["spouse", "self"]) {
       if (shortfall <= 1e-9) break;
       const mine = list.filter((x) => x.tax > 0 && taxOK(x) && !under55(x) && keyOf(x) === key && lim(x) > 0).sort(by({ h: 0, w: 1, psa: 2 }));
@@ -2069,7 +2069,7 @@ function runEngine(p, extraMonthly = 0) {
         if (sw.leave && pp.leaveFrom != null && idx >= pp.leaveFrom && idx <= pp.leaveTo) { Y.careLoss += g; continue; } // 대안: 가족돌봄휴직(무급)
         const inCare = sw.care && pp.careFrom != null && idx >= pp.careFrom && idx <= pp.careTo;
         if (inCare) { Y.careLoss += g * (1 - E.careRatio); g *= E.careRatio; }
-        // 국민연금 보험료는 기준소득월액 기준: 근로시간 단축 기간에는 줄기 전 소득, 단축이 있던 해의 소득은 다음 해 7월~그다음 해 6월에 반영(보고서 계산서 L열)
+        // 국민연금 보험료는 기준소득월액 기준: 근로시간 단축 기간에는 줄기 전 소득, 단축이 있던 해의 소득은 다음 해 7월~그다음 해 6월에 반영
         const npB = Math.min(LAW.npCap, Math.max(LAW.npFloor, inCare ? g / E.careRatio : (npLagOf(pp)[idx] ?? g)));
         const sixtyIdx = pp.birthIdx + 60 * 12, inVol = pp.npVolFromIdx != null && idx >= pp.npVolFromIdx && idx <= pp.npEndIdx;
         const npShare = idx <= sixtyIdx ? npB * LAW.npRate(y) / 2 : inVol ? npB * LAW.npRate(y) : 0; // 임의계속가입: 그달 소득 기준, 본인 전액
@@ -2181,7 +2181,7 @@ function runEngine(p, extraMonthly = 0) {
         if (num(sw.prepayMode, 1) === 2) l.fixedPay = true; // 1: 월 상환액 줄이기(남은 기간으로 다시 계산), 2: 기간 줄이기(상환액 그대로)
       }
     }
-    const saleNow = sw.ds && !sold && y === sw.dsY && mo === sw.dsM && houseVal > 0; // 매각하는 달에는 매각 대금으로 대출을 한꺼번에 갚으므로 그달 상환은 없음(보고서 계산서와 같음)
+    const saleNow = sw.ds && !sold && y === sw.dsY && mo === sw.dsM && houseVal > 0; // 매각하는 달에는 매각 대금으로 대출을 한꺼번에 갚으므로 그달 상환은 없음
     for (const l of loans) if (l.bal > 0.01 && !(saleNow && !l.fromGoal)) {
       l.k = (l.k || 0) + 1;
       if (l.rcIdx != null && l.rateNew != null && idx >= l.rcIdx && !l.rcDone) { l.r = l.rateNew / 12; l.rcDone = true; Y.events.push(`${l.name} 금리 변경 ${(l.rateNew * 100).toFixed(2)}%`); } // 변동금리: 바뀐 금리로 남은 기간 다시 계산
@@ -2210,7 +2210,7 @@ function runEngine(p, extraMonthly = 0) {
       const hs = props.filter((x) => !x.sold && x.kind === "주택"), off = hs.reduce((t, x) => t + x.val * x.ratio, 0) + (E.ownHome && houseVal > 0 ? houseVal * houseOfficialRatio : 0), n = hs.length + (E.ownHome && houseVal > 0 ? 1 : 0);
       const tx = compTax(off, n); if (tx > 0) { Y.propTax += tx; liquid -= tx; }
     }
-    // ── 재무목표: 특정 시점 금액은 그해 첫 달에 한 번, 기간별 금액은 그해 남은 달에 나눠서(통합계산서의 연중 균등 유출과 같음) ──
+    // ── 재무목표: 특정 시점 금액은 그해 첫 달에 한 번, 기간별 금액은 그해 남은 달에 나눠서(연중 균등 유출로 봄) ──
     {
       const at = (g) => Math.max(start, g.atIdx); // 지난 달이면 첫 달
       const gi = p.goals.filter((g) => (g.atIdx != null ? (g.once ? idx === at(g) : idx >= at(g) && idx < g.atIdx + g.years * 12) : age >= g.age && age < g.age + g.years && (g.once ? Y.months === 1 : true)));
@@ -2240,7 +2240,7 @@ function runEngine(p, extraMonthly = 0) {
       }
       // DB→DC 전환(대안: dc)
       if (ac.type === "DB" && sw.dc && !dcMoved && owner.dcIdx != null && idx === owner.dcIdx) {
-        const amt = avgWage30(owner.wageAt(idx - 1), owner.bonus) * owner.daysAt(idx + 1) / 365; // 전환 직전 임금 기준, 전환 달 말일까지 재직일수(통합계산서 퇴직급여 시트)
+        const amt = avgWage30(owner.wageAt(idx - 1), owner.bonus) * owner.daysAt(idx + 1) / 365; // 전환 직전 임금 기준, 전환 달 말일까지 재직일수
         ac.type = "DC"; ac.tax = amt; ac.def = 0; ac.r = E.dcRate; dcMoved = true; ac.noGrowIdx = idx; /* 전환은 그달 말일 → 그달 운용수익 없음 */ Y.events.push(`DB→DC 전환 ${Math.round(amt)}`);
       }
       if (ac.type === "DC" && !ac.started && idx < owner.retireIdx && owner.gross && !(owner.dcIdx != null && idx <= owner.dcIdx)) ac.dcPend = owner.wageAt(idx) / 12 / 12; // DC 부담금은 전환 다음 달부터, 그달 중간에 들어온 것으로(아래 운용 뒤 반달치 수익)
@@ -2290,12 +2290,12 @@ function runEngine(p, extraMonthly = 0) {
       let toPsa = 0;
       if (sw.psa && (me.ageAt(idx) >= 60) && E.houseBuyPrice > 0 && houseVal * houseOfficialRatio <= 120000) toPsa = Math.min(sw.psaCap, sale - buy, Math.max(0, netIn));
       houseVal = buy; Y.ds += netIn - toPsa; liquid += netIn - toPsa;
-      // 연금저축 납입은 그해 6월 말(연중 가운데)에 — 통합계산서의 연중 납입(반년 운용)과 같게. 6월이 지났으면 바로
+      // 연금저축 납입은 그해 6월 말(연중 가운데)에 — 연중 납입은 반년 운용으로 봄. 6월이 지났으면 바로
       if (toPsa > 0) pendingPsa = { amt: toPsa, idx: mo <= 6 ? y * 12 + 5 : idx, held: mo <= 6, lateM: mo > 6 ? mo - 6 : 0 };
       Y.events.push(`다운사이징 순유입 ${Math.round(netIn)}${toPsa ? ` · 연금저축 ${Math.round(toPsa)}` : ""}`);
     }
     if (pendingPsa && idx === pendingPsa.idx) {
-      // 7월 이후에 판 해도 그해 납입은 반년 운용으로 봄(보고서 계산서 연 단위 방식: 기중 납입 = (1 + 수익률)^(½)) — 모자란 개월만큼의 수익은 운용수익(과세분)으로
+      // 7월 이후에 판 해도 그해 납입은 반년 운용으로 봄(기중 납입 = (1 + 수익률)^(½)) — 모자란 개월만큼의 수익은 운용수익(과세분)으로
       const bonus = pendingPsa.lateM ? pendingPsa.amt * (Math.pow(1 + E.psaRate, pendingPsa.lateM / 12) - 1) : 0;
       const psaAc = accts.find((a) => a.owner === "본인" && a.type === "연금저축" && a.startIdx === Infinity);
       if (psaAc) { psaAc.exempt += pendingPsa.amt; psaAc.tax += bonus; }
@@ -2333,10 +2333,10 @@ function runEngine(p, extraMonthly = 0) {
       const funeralCash = E.funeral * P, funeral = Math.min(1000, Math.max(500, funeralCash)); // 현금 지출 / 상속세 장례비 공제
       if (otherAlive) {
         Y.inhTax += funeralCash; liquid -= funeralCash; Y.events.push(`장례비 ${Math.round(funeralCash)}`);
-        pend1 = { pp, idx, funeral }; // 상속재산은 사망 연도 말 금액으로 평가(보고서 계산서 상속 계산과 같음)
+        pend1 = { pp, idx, funeral }; // 상속재산은 사망 연도 말 금액으로 평가
       } else {
         if (pend1) settle1(idx); // 같은 해에 둘 다 떠나면 1차부터 정리
-        pend2 = { pp, idx, funeral, funeralCash }; // 2차도 사망 연도 말 금액으로 평가(보고서 계산서와 같음)
+        pend2 = { pp, idx, funeral, funeralCash }; // 2차도 사망 연도 말 금액으로 평가
       }
     }
     if (pendingInh && idx === pendingInh.idx) { Y.inhTax += pendingInh.amt; liquid -= pendingInh.amt; Y.events.push(`상속세 납부 ${Math.round(pendingInh.amt)}`); pendingInh = null; }
@@ -2652,7 +2652,7 @@ function renderOtherAssets() {
     </div>`;
   }).join("");
 }
-// "다른 칸에서 계산" 목표의 금액 출처: 3-1 가 표에 그 출처의 합계를 끌어와 보여 줌(보고서 계산서 3-1 B표 방식)
+// "다른 칸에서 계산" 목표의 금액 출처: 3-1 가 표에 그 출처의 합계를 끌어와 보여 줌
 const EXT_SRCS = ["", "은퇴 후 생활비", "월 지출 항목", "근로시간 단축", "자녀 증여"];
 function extSrcUI(g, i) {
   const items = (state.expense.items || []).map((it, j) => ({ j, name: it.name || `항목 ${j + 1}` }));
@@ -2763,7 +2763,7 @@ function extTotals(p, a) {
   };
 }
 
-// 3-1·3-2 표의 금액(만 원): 1,000 미만은 소수 첫째 자리(정수면 그대로), 그 이상은 반올림 정수 — 보고서 표기와 같음
+// 3-1·3-2 표의 금액(만 원): 1,000 미만은 소수 첫째 자리(정수면 그대로), 그 이상은 반올림 정수
 const fmtM = (v) => {
   if (v == null || !Number.isFinite(v)) return "–";
   const a = Math.abs(v), s = v < 0 ? "−" : "";
@@ -2771,11 +2771,11 @@ const fmtM = (v) => {
   if (r < 1000) return (r ? s : "") + (Number.isInteger(r) ? String(r) : r.toFixed(1));
   return s + Math.round(a).toLocaleString("ko-KR");
 };
-// 달성률: 소수 첫째 자리. 목표 언저리(99~101%)는 넘었는지 모자란지 보이게 둘째 자리(보고서: 58.3% · 100.06%)
+// 달성률: 소수 첫째 자리. 목표 언저리(99~101%)는 넘었는지 모자란지 보이게 둘째 자리
 const pctTxt = (r) => { const v = r * 100; return Math.abs(v - 100) < 1 && Math.abs(v - 100) > 1e-9 ? (Math.round(v * 100) / 100).toFixed(2) + "%" : (Math.round(v * 10) / 10).toFixed(1) + "%"; };
-// 재무비율 백분율: 100% 이상은 정수, 그 밖은 소수 첫째 자리(보고서 표기)
+// 재무비율 백분율: 100% 이상은 정수, 그 밖은 소수 첫째 자리
 const ratioPct = (v) => (v >= 1 ? Math.round(v * 100) : Math.round(v * 1000) / 10) + "%";
-// 기준일 다음 달 현금흐름표(월) — 3-1 현금흐름표·재무비율·저축여력 KPI·월 지출 칸이 함께 씀(보고서 3-1 나., 교재 2장)
+// 기준일 다음 달 현금흐름표(월) — 3-1 현금흐름표·재무비율·저축여력 KPI·월 지출 칸이 함께 씀(교재 2장)
 // 고정 = 구분 '고정'·'자동차세' 항목 + 보험료 + 대출 이자 + 재산세(월할), 변동 = 나머지 항목. 자동차세는 엔진과 같은 차령 경감
 function cashFlowNow(p) {
   p = p || normalize(state, false);
@@ -2792,7 +2792,7 @@ function cashFlowNow(p) {
   const I = incomeNow(p), save = I.net - fixT - varT;
   return { I, B, fixed, vari, fixT, varT, out: fixT + varT, save, principal, extra: save - principal, interest, ptax };
 }
-// 3-2 목표·니즈·우선순위 평가: 보고서처럼 순위별로 묶어 '필요한 것 → 현상 유지로 마련되는 것 → 차이 → 평가'
+// 3-2 목표·니즈·우선순위 평가: 순위별로 묶어 '필요한 것 → 현상 유지로 마련되는 것 → 차이 → 평가'
 // 마련되는 것: 은퇴 생활비 = 은퇴자산 vs 총은퇴일시금 · 근로시간 단축 = 월 저축여력 · 지출 항목 = 매년 지급 여부
 // · 그 밖 = 목표 기간 안에 만기가 오는 예금(세후), 없으면 시작 연도 말 유동성 · 상속 = 자녀 순수령
 function goalGroups(p, a, cf) {
@@ -2840,7 +2840,7 @@ function goalGroups(p, a, cf) {
   return out.sort((x, y) => (x.rank ?? 99) - (y.rank ?? 99));
 }
 
-// ───────────────────── 3단계: 3-1 고객 관련 정보의 분석(보고서 구성) ─────────────────────
+// ───────────────────── 3단계: 3-1 고객 관련 정보의 분석 ─────────────────────
 function renderAna31(p, a) {
   const E = p.E, f = fmtM, pct = (x, t) => (t > 0 ? ` (${Math.round((x / t) * 100)}%)` : "");
   const ym = (idx) => `${Math.floor(idx / 12)}.${(idx % 12) + 1}`;
@@ -2863,7 +2863,7 @@ function renderAna31(p, a) {
   });
   if (p.legacy != null) { const inf = a.rows[a.rows.length - 1]?.inf ?? 1; gl.push({ rank: p.legacyRank ?? 99, pv: p.legacy, nom: p.legacy * inf, html: `<tr><td>${p.legacyRank ? p.legacyRank + "순위 " : ""}상속 목표(자녀 순수령, 현재가치)</td><td class="num">계획 끝</td><td class="num">${f(p.legacy)}</td><td class="num">${f(p.legacy * inf)}</td></tr>` }); }
   gl.sort((x, y) => x.rank - y.rank);
-  // 같은 순위가 여러 줄이면 순위 합계(보고서 3-1 가.: 1순위 6,002 · 2순위 19,376)
+  // 같은 순위가 여러 줄이면 순위 합계
   const body = [];
   gl.forEach((r, i) => {
     body.push(r.html);
@@ -3219,7 +3219,7 @@ function impacts(p) {
   }).sort((x, y) => y.spread - x.spread);
 }
 
-// 필수 = 첫 상담에서 꼭 받을 정보. 보고서 '1. 고객 정보' 표(가구·소득·거주·부채·금융자산·보험·현금흐름·상담 계기)와 2-1 재무목표 기준
+// 필수 = 첫 상담에서 꼭 받을 정보. '1. 고객 정보' 표(가구·소득·거주·부채·금융자산·보험·현금흐름·상담 계기)와 2-1 재무목표 기준
 // 0도 '받은 정보'로 봄. 배우자·자녀·대출은 '없음' 체크로 채울 수 있음
 function requiredStatus(s) {
   const c = s.client, has = (v) => !blank(v);
@@ -3312,7 +3312,7 @@ function renderLoanPay() {
   $("#loanSplit").textContent = pay > 0 ? `이자 ${fmt(interest)} · 원금 ${fmt(pay - interest)}` : state.loans.length ? "" : "부채에 대출을 넣으면 계산됩니다";
 }
 
-// 월 지출 합계 = 생활비(비면 추정) + 보험료 + 대출 원리금, 월 소득 대비 비율 = 보고서 재무비율 '가계수지상태'
+// 월 지출 합계 = 생활비(비면 추정) + 보험료 + 대출 원리금, 월 소득 대비 비율 = 재무비율 '가계수지상태'
 // ── 지금 시점 재무상태·월 소득: 1~2단계 재무상태표, 3-1 재무상태표·현금흐름표, 재무비율, KPI가 모두 이 값을 씀 ──
 // 대출 분류: 분류 칸(l.cat)이 있으면 그대로, 비어 있으면 전세대출·장기주택저당 공제·이름(주담대·주택담보·전세)으로 판단, 애매하면 '그 밖'
 const loanIsHouse = (l) => (l?.cat === "주택" ? true : l?.cat === "기타" ? false : !!(l?.lease || l?.deduct || /주담대|주택담보|전세/.test(l?.name || "")));
@@ -3420,7 +3420,7 @@ function renderScenario(pNow) {
   $("#scnTable").innerHTML = `<thead><tr><th>지표</th><th>3단계(현상 유지)</th></tr></thead><tbody>${scenarioRows(a).map((r) => `<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join("")}</tbody>`;
   // 재무비율(AFPK 포켓북)
   const CF = cashFlowNow(p3), B = CF.B, I = CF.I;
-  const outM = CF.out; // 현금흐름표 고정지출 + 변동지출(보고서 3-1: 재산세 포함, 대출 원금 제외)
+  const outM = CF.out; // 현금흐름표 고정지출 + 변동지출(재산세 포함, 대출 원금 제외)
   // 비율 = [이름, 분자, 분모, 기준, 충족 판정, 단위, 분모가 0이고 분자가 있을 때의 판정 문구]
   const ratios = [
     ["가계수지상태(월 지출 ÷ 세후 수입)", outM, I.net, "100% 이하", (v) => v <= 1],
@@ -3474,7 +3474,7 @@ function renderResultsCore() {
   ];
   $("#kpis").innerHTML = k.map((x) => `<div class="kpi ${x.c}"><span class="k">${esc(x.k)}</span><span class="v">${esc(x.v)}</span><span class="d">${esc(x.d)}</span></div>`).join("");
 
-  // 3-2 목표 표: 순위별(보고서 3-2 형식)
+  // 3-2 목표 표: 순위별
   const G = goalGroups(p, a, cfK);
   $("#goalNote").textContent = G.length ? `${G.filter((g) => g.status === "good").length}/${G.length}개 목표 충족 · 금액 만 원` : "";
   $("#goalTable").innerHTML = G.length ? `
@@ -4305,7 +4305,7 @@ function renderAltResults() {
 function persist() { try { localStorage.setItem(STORE_KEY, JSON.stringify({ state, isExample })); } catch (e) {} }
 function schedule() { clearTimeout(timer); timer = setTimeout(() => { renderResults(); persist(); }, 150); }
 // ── 금액 칸 도우미: 넣은 숫자(만 원)를 글로 보여 주고, 원 단위로 넣은 것 같으면 경고 ──
-// 경고 기준(임의 설정): 월 금액 1억 원 이상 · 연 금액 10억 원 이상 · 그 밖(잔액·목표 등) 100억 원 이상
+// 경고 기준(페이지 기준): 월 금액 1억 원 이상 · 연 금액 10억 원 이상 · 그 밖(잔액·목표 등) 100억 원 이상
 const AMT_WARN = { 월: 10000, 연: 100000, "": 1000000 };
 const korMan = (v) => {
   const neg = v < 0, a = Math.abs(v);
@@ -4942,8 +4942,8 @@ $("#btnAssume").addEventListener("click", () => showAssume(true));
 
 
 // ───────────────────── 페이지 ②: 4단계 대안 제시 ─────────────────────
-// 대안 라이브러리(보고서 4-1 B표를 일반화 + 추가 대안). flag가 있는 대안은 판단이 '채택'이면 계산에 들어감.
-const ALT_CRIT = [ // 출처: 통합계산서 4-1 A표(선택 기준). 이 가족에게만 해당하는 말만 일반 표현으로 바꿈
+// 대안 라이브러리(일반 대안 + 추가 대안). flag가 있는 대안은 판단이 '채택'이면 계산에 들어감.
+const ALT_CRIT = [ // 4-1 A표 선택 기준(일반 표현)
   ["법령 요건", "요건을 충족하지 못하는 대안은 제외(예: 주택차액 연금계좌 납입은 양도일 현재 60세 이상만 해당)"],
   ["유동성", "(가) 모든 해 연말 유동성 ≥ 0 · (나) 인출 규칙: 연말 유동성이 비상예비자금(정기 유출 3개월분)보다 적으면 그해 꺼낼 수 있는 연금계좌 잔액 안에서 부족분 인출(대안 '연금계좌 인출 규칙') · (다) 일시 사건(주택 매각 등) 직전에도 유동성 ≥ 비상예비자금 . 대안을 고를 때는 (가)와 (다)를 조건으로 봄"],
   ["목표 우선순위", "상위 목표(1순위 → 하위 순위)를 덜 충족시키는 대안은 하위 목표 이득이 있어도 채택하지 않음"],
@@ -5081,11 +5081,11 @@ function goalOpts() {
   if (!blank(state.legacy?.target)) o.push({ v: "legacy", rank: rk(state.legacy?.rank), label: `${blank(state.legacy?.rank) ? "" : num(state.legacy.rank) + "순위 "}상속 목표` });
   return o;
 }
-// 대안과 목표의 연결은 설계사가 고름(보고서 4-1 B표의 '목표' 열). 자동 연결 없음
+// 대안과 목표의 연결은 설계사가 고름('목표' 열). 자동 연결 없음
 const linkOf = (a) => state.altGoal?.[a.id] ?? "";
 const rankOf = (a, opts = goalOpts()) => opts.find((o) => o.v === linkOf(a))?.rank ?? 99;
 
-// ── 실행 순서: 설계사가 정함(보고서 4-1 C표). 정하기 전 기본값은 B표 순서(연결 목표 순위 → 라이브러리 순서, 연결 없음은 맨 뒤) — 임의 설정 ──
+// ── 실행 순서: 설계사가 정함. 정하기 전 기본값은 B표 순서(연결 목표 순위 → 라이브러리 순서, 연결 없음은 맨 뒤) — 페이지 기준 ──
 function orderIds(ids) {
   const all = allAlts(), opts = goalOpts(), pos = (id) => all.findIndex((a) => a.id === id);
   const auto = [...ids].sort((x, y) => rankOf(altById(x), opts) - rankOf(altById(y), opts) || pos(x) - pos(y));
@@ -5100,7 +5100,7 @@ const METRICS = {
   min: { label: "연말 유동성 최저(실질)", short: "유동성 최저" },
   goals: { label: "달성 목표 수", short: "달성 목표 수", cnt: true },
 };
-// 기준 5에서 비교할 결과는 설계사가 고름(보고서: 6순위 자녀 순수령). 고르기 전에는 '선택 필요'
+// 기준 5에서 비교할 결과는 설계사가 고름. 고르기 전에는 '선택 필요'
 const metricKey = () => (METRICS[state.altMetric] ? state.altMetric : null);
 const metricInfo = () => METRICS[metricKey()] || { label: "비교할 결과(선택 필요)", short: "선택 필요" };
 const mval = (m, k = metricKey()) => (k == null ? null : k === "goals" ? m.goalsMet : m[k]);
@@ -5154,7 +5154,7 @@ function renderAltCore() {
   const fit = ALL.filter((a) => altApplies(a, ctx).ok || (a.flag && flagOn(a)));
   const skip = ALL.filter((a) => !fit.includes(a));
   const pos = (a) => ALL.indexOf(a);
-  const sorted = (list) => [...list].sort((x, y) => rankOf(x, gopts) - rankOf(y, gopts) || pos(x) - pos(y)); // 보고서 4-1 B표처럼 목표 순위 순
+  const sorted = (list) => [...list].sort((x, y) => rankOf(x, gopts) - rankOf(y, gopts) || pos(x) - pos(y)); // 목표 순위 순
   const noVal = on.filter((a) => missingReq(a).length);
   $("#altCount").textContent = `해당 ${fit.length}개 · 계산 반영 ${on.length - noVal.length}개${noVal.length ? ` · 값 없음 ${noVal.length}개` : ""}${skip.length ? ` · 해당 없음 ${skip.length}개` : ""}`;
   const gl = goalLinks(state), LK = { careFrom: "목표", careTo: "목표", giftY: "목표" };

@@ -24,13 +24,20 @@ for f in ["assumptions.json", "regulations.json", "regulations.html"]:
 # 글꼴(Pretendard, OFL): fonts/ 폴더째 복사
 shutil.copytree(os.path.join(SRC, "fonts"), os.path.join(PUB, "fonts"), dirs_exist_ok=True)
 
+# 공개용 정리: 원본 주석은 그대로 두고, 공개되는 파일에서만 보고서·계산서 내부 참조를 뺀다(..\수정작업\clean_publish.py)
+sys.path.insert(0, os.path.join(SRC, "수정작업"))
+from clean_publish import clean_html, clean_assumptions, code_only
+open(os.path.join(PUB, "assumptions.json"), "w", encoding="utf-8", newline=chr(10)).write(clean_assumptions(open(os.path.join(SRC, "assumptions.json"), encoding="utf-8").read()))
+
 # 규제 페이지: 자체 사이트에서는 관리자 조회·반영 서버 함수에 연결
 rh = os.path.join(PUB, "regulations.html")
 t = open(rh, encoding="utf-8").read()
 for a, b in [('const REFRESH_URL = "";', 'const REFRESH_URL = "api/regs-refresh";'), ('const APPLY_URL = "";', 'const APPLY_URL = "api/regs-apply";')]:
     assert t.count(a) == 1, ("regulations.html에서 바꿀 곳을 찾지 못함", a)
     t = t.replace(a, b)
-open(rh, "w", encoding="utf-8").write(t)
+t2 = clean_html(t)
+assert code_only(t) == code_only(t2), "regulations.html: 주석 정리 중 코드가 바뀜"
+open(rh, "w", encoding="utf-8").write(t2)
 
 s = open(os.path.join(SRC, "goal-planner.html"), encoding="utf-8").read()
 
@@ -140,6 +147,9 @@ for f in os.listdir(PWA):
 # 안드로이드 앱(TWA)이 주소창 없이 열리도록 사이트 소유를 증명하는 파일
 os.makedirs(os.path.join(PUB, ".well-known"), exist_ok=True)
 shutil.copyfile(os.path.join(PWA, ".well-known", "assetlinks.json"), os.path.join(PUB, ".well-known", "assetlinks.json"))
+s2 = clean_html(s)
+assert code_only(s) == code_only(s2), "index.html: 주석 정리 중 코드가 바뀜"
+s = s2
 import hashlib
 build = hashlib.sha1(s.encode("utf-8")).hexdigest()[:10]  # 페이지가 바뀌면 캐시 이름도 바뀜
 sw = open(os.path.join(PWA, "sw.js"), encoding="utf-8").read().replace("__BUILD__", build)
