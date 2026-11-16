@@ -558,6 +558,34 @@ header.top .actions { align-items: center; }
 #btnCopy { margin-left: 4px; border-left: 1px solid var(--line); border-radius: 0; padding-left: 12px; }
 #btnCopy:hover, #btnPaste:hover { color: var(--accent); }
 @media (max-width: 560px) { #btnCopy { border-left: 0; margin-left: 0; padding-left: 8px; } .stage-nav a { padding: 6px 10px; } }
+
+/* ===== 디자인 정돈 2차 (2026-11-16) — D6·D7·D9·D10, CSS만. 되돌리려면 이 블록을 지우면 됩니다 ===== */
+/* D6 버튼 3종: 주(녹색 채움) · 보조(흰 바탕+테두리, 기본) · 텍스트(ghost: 테두리 없이 녹색 글씨) */
+button { border-radius: 8px; transition: background-color .12s, border-color .12s, color .12s; }
+button:not(.primary):not(.ghost):not(.x):not(.linkish):hover { border-color: var(--accent); color: var(--accent); }
+button.primary:hover:not(:disabled) { filter: brightness(1.08); }
+button.ghost { background: transparent; border-color: transparent; color: var(--accent); font-weight: 600; }
+button.ghost:hover:not(:disabled) { background: var(--accent-soft); border-color: transparent; }
+button.small { padding: 4px 10px; }
+.seg button, .scn-seg button, .tabs button, .mode-tg button, .stage-nav a { transition: background-color .12s, color .12s; }
+/* D7 숫자: 모든 표 숫자 자릿수 맞춤, 합계 줄 굵게 + 위 구분선, 음수는 빨강으로 통일 */
+table, .kpi .v, .exp-sum b, .exp-all b, .bs-row b, .est-range { font-variant-numeric: tabular-nums; }
+tr.sum td { font-weight: 600; border-top: 1px solid var(--line); background: var(--surface-2); }
+td.neg, .neg { color: var(--bad); }
+/* D9 2단계 오른쪽 칸(필수 정보·AI 점검·3단계 보기)을 스크롤해도 보이게 — 넓은 화면만 */
+@media (min-width: 981px) {
+  .layout > .results { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+}
+/* D10 여백 8·16·24 단위, 모서리는 카드 12px · 입력칸과 버튼 8px */
+:root { --r: 12px; }
+.wrap, .layout, .results, .alt-view, .ana-grid, .assume-view { gap: 16px; }
+.ana-main, .ana-side { gap: 16px; }
+.card { padding: 16px; gap: 12px; }
+.row, .phase, .guide-row { padding: 12px; gap: 8px; border-radius: 8px; }
+.chk, .reg-result, .exp-all { padding: 12px; border-radius: 8px; }
+.rows, .checks, .proposals { gap: 8px; }
+input:not([type="checkbox"]):not([type="radio"]), select, textarea { border-radius: 8px; }
+.yearly, .exp-sum, .prop, .radio, .tip { border-radius: 8px; }
 </style>
 </head>
 <body>
