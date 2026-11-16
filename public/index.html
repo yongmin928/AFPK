@@ -591,6 +591,35 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea { border-radi
 body { font-variant-numeric: tabular-nums; letter-spacing: -.005em; }
 input, select, textarea, button { font-variant-numeric: tabular-nums; }
 .kpi .v { font-weight: 600; letter-spacing: -.02em; }
+
+/* ===== 왼쪽 목차(E1, 2026-11-16) — 넓은 화면은 왼쪽에 고정, 좁은 화면은 [목차] 단추로 펼침 ===== */
+.toc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.toc-title { font-size: 12px; font-weight: 600; color: var(--muted); padding: 0 10px 8px; }
+.toc-list li { position: relative; }
+.toc-list a { display: block; padding: 5px 10px; border-radius: 8px; color: var(--muted); text-decoration: none; font-size: 13px; line-height: 1.4; }
+.toc-list a:hover { color: var(--ink); background: var(--surface-2); }
+.toc-list li.lvl0 > a { color: var(--ink); font-weight: 700; margin-top: 10px; }
+.toc-list li.lvl0:first-child > a { margin-top: 0; }
+.toc-list li.lvl2 > a { padding-left: 22px; font-size: 12px; }
+.toc-list li.warn > a::after { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); margin-left: 6px; vertical-align: middle; }
+.toc-list li.on > a { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.toc-desc { display: none; padding: 2px 10px 6px; font-size: 12px; color: var(--muted); line-height: 1.45; }
+.toc-list li.on > .toc-desc { display: block; }
+.toc-list li.warn.on > .toc-desc { color: var(--warn); }
+.ledger > fieldset, .ledger > .stage-h, .info-add, .card, .ana-h { scroll-margin-top: 12px; }
+@media (min-width: 1200px) {
+  body.has-toc .wrap { max-width: 1556px; padding-left: 232px; position: relative; }
+  .toc { position: absolute; left: 0; top: 0; bottom: 0; width: 212px; }
+  .toc-in { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 12px 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+  .toc-toggle { display: none; }
+}
+@media (max-width: 1199.98px) {
+  .toc { position: fixed; left: 12px; bottom: max(12px, env(safe-area-inset-bottom, 0px)); z-index: 30; }
+  .toc-toggle { border-radius: 999px; background: var(--ink); color: var(--bg); border-color: var(--ink); padding: 8px 16px; font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+  .toc-in { display: none; position: absolute; left: 0; bottom: 48px; width: min(300px, calc(100vw - 24px)); max-height: min(70vh, 560px); overflow-y: auto; padding: 12px 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+  .toc.open .toc-in { display: block; }
+}
+@media print { .toc { display: none; } }
 </style>
 </head>
 <body>
@@ -5606,6 +5635,118 @@ fetch("assumptions.json", { cache: "no-cache" }).then((r) => { if (!r.ok) throw 
 }).catch(() => {
   $("#kpis").innerHTML = `<div class="kpi bad"><span class="k">추정 기준을 불러오지 못했습니다</span><span class="d">assumptions.json이 필요합니다</span></div>`;
 });
+</script>
+<script>
+// ───────────────────── 왼쪽 목차(E1): 화면의 소제목을 읽어 만들고, 지금 위치 표시·누르면 이동 ─────────────────────
+// 계산·입력값은 건드리지 않는다. 소제목·설명은 화면에 실제로 있는 글자(소제목, 칸 이름, 부제)에서 뽑는다.
+(() => {
+  const nav = document.createElement("nav");
+  nav.className = "toc"; nav.setAttribute("aria-label", "이 화면의 목차");
+  nav.innerHTML = `<button type="button" class="toc-toggle" aria-expanded="false">목차</button><div class="toc-in"><div class="toc-title">이 화면의 목차</div><ol class="toc-list"></ol></div>`;
+  const wrap = document.querySelector(".wrap");
+  wrap.prepend(nav);
+  document.body.classList.add("has-toc");
+  const list = nav.querySelector(".toc-list"), toggle = nav.querySelector(".toc-toggle");
+  let items = [], activeIdx = -1;
+
+  const clean = (el) => {
+    const c = el.cloneNode(true);
+    c.querySelectorAll("small, button, .base-date, em.req, select, input, textarea, .note, .pill").forEach((x) => x.remove());
+    return c.textContent.replace(/\s+/g, " ").trim();
+  };
+  const sub = (el) => { const s = el.querySelector(":scope > small"); return s ? s.textContent.replace(/\s+/g, " ").trim() : ""; };
+  // ① 정보 수집: 구역 안 입력칸 이름 몇 개로 "여기서 넣는 것"을 보여 줌
+  const fieldNames = (box) => {
+    const seen = new Set(), out = [];
+    box.querySelectorAll(".field > label, label.mini, .flabel, .m-sub, .extra-sub, .info-row .nm").forEach((l) => {
+      if (!l.offsetParent) return;
+      const c = l.cloneNode(true); c.querySelectorAll("small, em, select, input, textarea, button").forEach((x) => x.remove());
+      const t = c.textContent.replace(/\s+/g, " ").trim();
+      if (t && t.length <= 22 && !seen.has(t)) { seen.add(t); out.push(t); }
+    });
+    return out.length ? "넣는 것: " + out.slice(0, 4).join(" · ") + (out.length > 4 ? ` 외 ${out.length - 4}개` : "") : "";
+  };
+  const view = () => {
+    if (!document.querySelector("#assumeView").hidden) return null;
+    if (!document.querySelector("#altView").hidden) return document.querySelector("#altView");
+    if (!document.querySelector("#anaView").hidden) return document.querySelector("#anaView");
+    return document.querySelector(".layout");
+  };
+  // 필수 정보가 빈 구역(오른쪽 "필수 정보" 카드와 같은 판정)
+  const missingBySection = () => {
+    const m = new Map();
+    try {
+      for (const r of requiredStatus(state)) {
+        if (r.done) continue;
+        const el = document.getElementById(r.id); const fs = el && el.closest("fieldset");
+        if (fs) m.set(fs, [...(m.get(fs) || []), r.label]);
+      }
+    } catch (e) {}
+    return m;
+  };
+
+  function build() {
+    const v = view();
+    nav.hidden = !v;
+    if (!v) return;
+    const out = [];
+    if (v.classList.contains("layout")) {
+      const add = v.querySelector(".info-add");
+      if (add) out.push({ el: add, label: "상담 내용 넣기", desc: "들은 내용을 붙여 넣거나 말하면 AI가 알맞은 칸에 넣습니다", lvl: 1 });
+      const miss = missingBySection();
+      v.querySelectorAll(".ledger > .stage-h, .ledger > fieldset").forEach((el) => {
+        if (el.matches(".stage-h")) { out.push({ el, label: clean(el), desc: sub(el), lvl: 0 }); return; }
+        const lg = el.querySelector(":scope > legend"); if (!lg || !el.offsetParent) return;
+        const ms = miss.get(el) || [];
+        out.push({ el, label: clean(lg), desc: (ms.length ? `필수 비어 있음: ${ms.join(", ")}. ` : "") + fieldNames(el), lvl: 1, warn: ms.length > 0 });
+      });
+    } else {
+      v.querySelectorAll(".card-head h2, .ana-h").forEach((h) => {
+        if (!h.offsetParent) return;
+        const top = h.querySelector(".stage-no");
+        const el = h.matches(".ana-h") ? h : (h.closest(".card, .panel") || h);
+        out.push({ el, label: clean(h), desc: sub(h), lvl: top ? 0 : h.matches(".ana-h") ? 2 : 1, side: !!h.closest(".ana-side") });
+      });
+    }
+    const sig = out.map((o) => o.lvl + o.label + (o.warn ? "!" : "") + o.desc).join("|");
+    if (sig === list.dataset.sig) { items.forEach((it, i) => (it.el = out[i].el)); spy(); return; }
+    list.dataset.sig = sig; items = out; activeIdx = -1;
+    list.innerHTML = out.map((o, i) => `<li class="lvl${o.lvl}${o.warn ? " warn" : ""}"><a href="#" data-toc="${i}"${o.desc ? ` title="${o.desc.replace(/"/g, "&quot;")}"` : ""}>${o.label.replace(/</g, "&lt;")}</a>${o.desc ? `<span class="toc-desc">${o.desc.replace(/</g, "&lt;")}</span>` : ""}</li>`).join("");
+    spy();
+  }
+  // 지금 보고 있는 구역: 화면 위쪽(140px)을 지난 마지막 소제목. 오른쪽 고정 칸(종합 평가 등)은 위치 판정에서 뺀다
+  function spy() {
+    let idx = -1;
+    items.forEach((it, i) => { if (!it.side && it.el.getBoundingClientRect().top <= 140) idx = i; });
+    if (idx < 0 && items.length) idx = 0;
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) { for (let i = items.length - 1; i >= 0; i--) if (!items[i].side) { idx = i; break; } }
+    if (idx === activeIdx) return;
+    activeIdx = idx;
+    list.querySelectorAll("li").forEach((li, i) => li.classList.toggle("on", i === idx));
+    const on = list.querySelector("li.on"), box = nav.querySelector(".toc-in");
+    if (on && box.scrollHeight > box.clientHeight) { const r = on.getBoundingClientRect(), b = box.getBoundingClientRect(); if (r.top < b.top + 30 || r.bottom > b.bottom - 30) box.scrollTop += r.top - b.top - box.clientHeight / 3; }
+  }
+  list.addEventListener("click", (e) => {
+    const a = e.target.closest("a[data-toc]"); if (!a) return;
+    e.preventDefault();
+    const it = items[+a.dataset.toc]; if (!it) return;
+    it.el.scrollIntoView({ behavior: "smooth", block: "start" });
+    nav.classList.remove("open"); toggle.setAttribute("aria-expanded", "false");
+  });
+  toggle.addEventListener("click", () => { const o = nav.classList.toggle("open"); toggle.setAttribute("aria-expanded", String(o)); });
+  document.addEventListener("click", (e) => { if (nav.classList.contains("open") && !nav.contains(e.target)) { nav.classList.remove("open"); toggle.setAttribute("aria-expanded", "false"); } });
+
+  let raf = 0, t = 0;
+  window.addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; spy(); }); }, { passive: true });
+  // 화면이 계속 다시 그려져도 목차가 밀리지 않게: 예약이 있으면 새로 미루지 않는다
+  const later = (ms = 250) => { if (t) return; t = setTimeout(() => { t = 0; build(); }, ms); };
+  window.addEventListener("hashchange", () => { build(); later(600); }); // 단계를 바꾸면 바로, 내용이 다 그려진 뒤 한 번 더
+  window.addEventListener("resize", () => later());
+  document.addEventListener("input", () => later(400));
+  document.addEventListener("change", () => later(400));
+  new MutationObserver(() => later()).observe(wrap, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"] });
+  build();
+})();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
